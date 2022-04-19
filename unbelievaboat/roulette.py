@@ -232,7 +232,7 @@ class Roulette(MixinMeta):
         """
         if ctx.guild.id not in self.roulettegames:
             await self.roulette_start(ctx)
-        if self.roulettegames[ctx.guild.id]["started"]:
+        if ctx.guild.id in self.roulettegames and self.roulettegames[ctx.guild.id]["started"]:
             return await ctx.send(f"{ctx.author.display_name}, the wheel is already spinning.")
         conf = await self.configglobalcheck(ctx)
         betting = await conf.betting()
