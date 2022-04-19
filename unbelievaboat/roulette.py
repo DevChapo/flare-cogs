@@ -248,7 +248,26 @@ class Roulette(MixinMeta):
             f"{ctx.author.name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {bet}."
         )
 
-    async def roulette_spin(self, ctx, time):
+    @roulette_disabled_check()
+    @roulette.command(name="start")
+    async def roulette_start(self, ctx):
+        """Start a game of roulette."""
+        if ctx.guild.id not in self.roulettegames:
+            self.roulettegames[ctx.guild.id] = {
+                "zero": [],
+                "color": [],
+                "number": [],
+                "dozen": [],
+                "odd_or_even": [],
+                "halfs": [],
+                "column": [],
+                "started": False,
+            }
+        else:
+            return await ctx.send("There is already a roulette game on.")
+        conf = await self.configglobalcheck(ctx)
+        time = await conf.roulette_time()
+        await ctx.send("The roulette wheel will be spun in {} seconds.".format(time), delete_after=time)
         async with ctx.typing():
             await asyncio.sleep(time)
         self.roulettegames[ctx.guild.id]["started"] = True
@@ -279,30 +298,6 @@ class Roulette(MixinMeta):
         )
         await msg.edit(embed=emb)
         del self.roulettegames[ctx.guild.id]
-
-    @roulette_disabled_check()
-    @roulette.command(name="start")
-    async def roulette_start(self, ctx):
-        """Start a game of roulette."""
-        if ctx.guild.id not in self.roulettegames:
-            self.roulettegames[ctx.guild.id] = {
-                "zero": [],
-                "color": [],
-                "number": [],
-                "dozen": [],
-                "odd_or_even": [],
-                "halfs": [],
-                "column": [],
-                "started": False,
-            }
-        else:
-            return await ctx.send("There is already a roulette game on.")
-        conf = await self.configglobalcheck(ctx)
-        time = await conf.roulette_time()
-        await ctx.send(
-            "The roulette wheel will be spun in {} seconds.".format(time), delete_after=time
-        )
-        asyncio.create_task(self.roulette_spin(ctx, time))
 
     @checks.admin_or_permissions(manage_guild=True)
     @check_global_setting_admin()
