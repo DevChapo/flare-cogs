@@ -231,8 +231,18 @@ class Roulette(MixinMeta):
         - This is based on the English version of the roulette wheel.
         """
         if ctx.guild.id not in self.roulettegames:
+            self.roulettegames[ctx.guild.id] = {
+                "zero": [],
+                "color": [],
+                "number": [],
+                "dozen": [],
+                "odd_or_even": [],
+                "halfs": [],
+                "column": [],
+                "started": False,
+            }
             await self.roulette_start(ctx)
-        if ctx.guild.id in self.roulettegames and self.roulettegames[ctx.guild.id]["started"]:
+        if self.roulettegames[ctx.guild.id]["started"]:
             return await ctx.send(f"{ctx.author.display_name}, the wheel is already spinning.")
         conf = await self.configglobalcheck(ctx)
         betting = await conf.betting()
@@ -248,22 +258,9 @@ class Roulette(MixinMeta):
             f"{ctx.author.name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {bet}."
         )
 
-    @roulette_disabled_check()
-    @roulette.command(name="start")
     async def roulette_start(self, ctx):
         """Start a game of roulette."""
-        if ctx.guild.id not in self.roulettegames:
-            self.roulettegames[ctx.guild.id] = {
-                "zero": [],
-                "color": [],
-                "number": [],
-                "dozen": [],
-                "odd_or_even": [],
-                "halfs": [],
-                "column": [],
-                "started": False,
-            }
-        else:
+        if ctx.guild.id in self.roulettegames:
             return await ctx.send("There is already a roulette game on.")
         conf = await self.configglobalcheck(ctx)
         time = await conf.roulette_time()
