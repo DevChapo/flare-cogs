@@ -230,8 +230,12 @@ class Roulette(MixinMeta):
         Colums   - 1st/2nd/3rd Column.
         - This is based on the English version of the roulette wheel.
         """
+        #if ctx.guild.id not in self.roulettegames: #REQUIRES FIX
+        #    await self.roulette_start(ctx)
         if ctx.guild.id not in self.roulettegames:
-            await self.roulette_start(ctx)
+            return await ctx.send(
+                "Start a roulette game using {}roulette start".format(ctx.prefix)
+            )
         if self.roulettegames[ctx.guild.id]["started"]:
             return await ctx.send(f"{ctx.author.display_name}, the wheel is already spinning.")
         conf = await self.configglobalcheck(ctx)
