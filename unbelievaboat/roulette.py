@@ -215,7 +215,7 @@ class Roulette(MixinMeta):
                     msg.append([bet_type, humanize_number(payout), user.display_name])
         return msg
 
-    #@commands.group(invoke_without_command=True)
+    @commands.group(invoke_without_command=True)
     @commands.guild_only()
     @roulette_disabled_check()
     async def roulette(self, ctx, amount: int, *, bet):
