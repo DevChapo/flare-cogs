@@ -137,8 +137,23 @@ class Roulette(MixinMeta):
         conf = await self.configglobalcheck(ctx)
         payouts = await conf.roulette_payouts()
         color = NUMBERS[winningnum]
-        odd_even = "odd" if winningnum % 2 != 0 else "even"
-        half = "1st half" if winningnum <= 18 else "2nd half"
+
+        # Determine odd/even; exclude 0
+        if winningnum == 0:
+            odd_even = None
+        elif winningnum % 2 != 0:
+            odd_even = "odd"
+        else:
+            odd_even = "even"
+
+        # Determine 1st half/2nd half; exclude 0
+        if winningnum == 0:
+            half = None
+        elif winningnum <= 18:
+            half = "1st half"
+        else:
+            half = "2nd half"
+
         dozen = "N/A"
         if bets["dozen"]:
             if winningnum == 0:
