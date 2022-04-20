@@ -107,13 +107,15 @@ class Roulette(MixinMeta):
             for better in self.roulettegames[ctx.guild.id]["number"]:
                 if better.get(_type, False) and better[_type]["user"] == ctx.author.id:
                     return {"failed": f"{ctx.author.display_name}, you cannot make duplicate bets."}
-            self.roulettegames[ctx.guild.id]["number"].append(
-                {_type: {"user": ctx.author.id, "amount": bet}}
-            )
+            
             try:
                 await self.roulettewithdraw(ctx, bet)
             except ValueError:
                 return {"failed": f"{ctx.author.display_name}, you do not have enough funds to complete this bet."}
+
+            self.roulettegames[ctx.guild.id]["number"].append(
+                {_type: {"user": ctx.author.id, "amount": bet}}
+            )
             return {"sucess": 200}
         if _type.lower() in BET_TYPES:
             for better in self.roulettegames[ctx.guild.id][BET_TYPES[_type.lower()]]:
@@ -145,7 +147,7 @@ class Roulette(MixinMeta):
             odd_even = "odd"
         else:
             odd_even = "even"
-
+        
         # Determine 1st half/2nd half; exclude 0
         if winningnum == 0:
             half = None
@@ -231,17 +233,9 @@ class Roulette(MixinMeta):
         - This is based on the English version of the roulette wheel.
         """
         if ctx.guild.id not in self.roulettegames:
-            self.roulettegames[ctx.guild.id] = {
-                "zero": [],
-                "color": [],
-                "number": [],
-                "dozen": [],
-                "odd_or_even": [],
-                "halfs": [],
-                "column": [],
-                "started": False,
-            }
-            await self.roulette_start(ctx)
+            return await ctx.send(
+                "Start a roulette game using {}roulette start".format(ctx.prefix)
+            )
         if self.roulettegames[ctx.guild.id]["started"]:
             return await ctx.send(f"{ctx.author.display_name}, the wheel is already spinning.")
         conf = await self.configglobalcheck(ctx)
@@ -258,13 +252,7 @@ class Roulette(MixinMeta):
             f"{ctx.author.name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {bet}."
         )
 
-    async def roulette_start(self, ctx):
-        """Start a game of roulette."""
-        if ctx.guild.id in self.roulettegames:
-            return await ctx.send("There is already a roulette game on.")
-        conf = await self.configglobalcheck(ctx)
-        time = await conf.roulette_time()
-        await ctx.send("The roulette wheel will be spun in {} seconds.".format(time), delete_after=time)
+    async def roulette_spin(self, ctx, time):
         async with ctx.typing():
             await asyncio.sleep(time)
         self.roulettegames[ctx.guild.id]["started"] = True
@@ -295,6 +283,30 @@ class Roulette(MixinMeta):
         )
         await msg.edit(embed=emb)
         del self.roulettegames[ctx.guild.id]
+
+    @roulette_disabled_check()
+    @roulette.command(name="start")
+    async def roulette_start(self, ctx):
+        """Start a game of roulette."""
+        if ctx.guild.id not in self.roulettegames:
+            self.roulettegames[ctx.guild.id] = {
+                "zero": [],
+                "color": [],
+                "number": [],
+                "dozen": [],
+                "odd_or_even": [],
+                "halfs": [],
+                "column": [],
+                "started": False,
+            }
+        else:
+            return await ctx.send("There is already a roulette game on.")
+        conf = await self.configglobalcheck(ctx)
+        time = await conf.roulette_time()
+        await ctx.send(
+            "The roulette wheel will be spun in {} seconds.".format(time), delete_after=time
+        )
+        asyncio.create_task(self.roulette_spin(ctx, time))
 
     @checks.admin_or_permissions(manage_guild=True)
     @check_global_setting_admin()
