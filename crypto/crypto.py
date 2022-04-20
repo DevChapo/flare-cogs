@@ -82,7 +82,8 @@ class Crypto(commands.Cog):
             status = coin_data["status"]
             if status["error_code"] in [1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011]:
                 if isinstance(coin, str):
-                    return await ctx.send("{} is not in my list of currencies!".format(coin))
+                    await ctx.send("{} is not in my list of currencies!".format(coin))
+                    return
                 await ctx.send(
                     "Something went wrong, the error code is "
                     "{code}\n`{error_message}`".format(
@@ -139,7 +140,8 @@ class Crypto(commands.Cog):
             status = coin_data["status"]
             if status["error_code"] in [1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011]:
                 if isinstance(coin, str):
-                    return await ctx.send("{} is not in my list of currencies!".format(coin))
+                    await ctx.send("{} is not in my list of currencies!".format(coin))
+                    return
                 await ctx.send(
                     "Something went wrong, the error code is "
                     "{code}\n`{error_message}`".format(
