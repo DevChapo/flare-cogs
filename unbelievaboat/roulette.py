@@ -233,9 +233,7 @@ class Roulette(MixinMeta):
         - This is based on the English version of the roulette wheel.
         """
         if ctx.guild.id not in self.roulettegames:
-            return await ctx.send(
-                "Start a roulette game using {}roulette start".format(ctx.prefix)
-            )
+            await self.roulette_start(ctx)
         if self.roulettegames[ctx.guild.id]["started"]:
             return await ctx.send(f"{ctx.author.display_name}, the wheel is already spinning.")
         conf = await self.configglobalcheck(ctx)
