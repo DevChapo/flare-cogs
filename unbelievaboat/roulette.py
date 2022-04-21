@@ -247,7 +247,7 @@ class Roulette(MixinMeta):
         if betret.get("failed") is not None:
             return await ctx.send(betret["failed"])
         await ctx.send(
-            f"{ctx.author.name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {bet}."
+            f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {bet}."
         )
 
     async def roulette_spin(self, ctx, time):
