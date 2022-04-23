@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import random
+import re
 
 import discord
 import tabulate
@@ -84,55 +85,73 @@ class Roulette(MixinMeta):
         else:
             await bank.withdraw_credits(ctx.author, bet)
 
-    async def betting(self, ctx, bet, _type):
+    async def single_bet(self, ctx, amount: int, selection):
+        """
+        This function processes a single bet, which can sometimes be part of a larger bet string.
+        """
+        bet_key = 'number'
+        if selection.lower() in BET_TYPES:
+            bet_key = BET_TYPES[selection.lower()]
+        elif selection == '0':
+            bet_key = 'zero'
+
         try:
-            _type = int(_type)
+            n = int(selection)
+            if n < 0 or n > 36:
+                return f"{ctx.author.display_name}, your bet ({n}) must be between 0 and 36."
         except ValueError:
             pass
-        if isinstance(_type, int):
-            if _type < 0 or _type > 36:
-                return {"failed": f"{ctx.author.display_name}, your bet must be between 0 and 36."}
-            if _type == 0:
-                for better in self.roulettegames[ctx.guild.id]["zero"]:
-                    if better.get(_type, False) and better[_type]["user"] == ctx.author.id:
-                        return {"failed": f"{ctx.author.display_name}, you cannot make duplicate bets."}
-                try:
-                    await self.roulettewithdraw(ctx, bet)
-                except ValueError:
-                    return {"failed": f"{ctx.author.display_name}, you do not have enough funds to complete this bet."}
-                self.roulettegames[ctx.guild.id]["zero"].append(
-                    {_type: {"user": ctx.author.id, "amount": bet}}
-                )
-                return {"sucess": 200}
-            for better in self.roulettegames[ctx.guild.id]["number"]:
-                if better.get(_type, False) and better[_type]["user"] == ctx.author.id:
-                    return {"failed": f"{ctx.author.display_name}, you cannot make duplicate bets."}
-            
-            try:
-                await self.roulettewithdraw(ctx, bet)
-            except ValueError:
-                return {"failed": f"{ctx.author.display_name}, you do not have enough funds to complete this bet."}
 
-            self.roulettegames[ctx.guild.id]["number"].append(
-                {_type: {"user": ctx.author.id, "amount": bet}}
-            )
-            return {"sucess": 200}
-        if _type.lower() in BET_TYPES:
-            for better in self.roulettegames[ctx.guild.id][BET_TYPES[_type.lower()]]:
-                if (
-                    better.get(_type.lower(), False)
-                    and better[_type.lower()]["user"] == ctx.author.id
-                ):
-                    return {"failed": f"{ctx.author.display_name}, you cannot make duplicate bets."}
-            try:
-                await self.roulettewithdraw(ctx, bet)
-            except ValueError:
-                return {"failed": f"{ctx.author.display_name}, you do not have enough funds to complete this bet."}
-            self.roulettegames[ctx.guild.id][BET_TYPES[_type.lower()]].append(
-                {_type.lower(): {"user": ctx.author.id, "amount": bet}}
-            )
-            return {"sucess": 200}
-        return {"failed": f"{ctx.author.display_name}, not a valid option"}
+        for better in self.roulettegames[ctx.guild.id][bet_key]:
+            if better.get(selection, False) and better[selection]["user"] == ctx.author.id:
+                return f"{ctx.author.display_name}, you cannot make a duplicate bet on ({selection})."
+
+        try:
+            await self.roulettewithdraw(ctx, amount)
+            self.roulettegames[ctx.guild.id][bet_key].append({selection: {"user": ctx.author.id, "amount": amount}})
+            return True
+        except ValueError:
+            return f"{ctx.author.display_name}, you do not have enough funds to complete this bet ({selection})."
+
+    async def betting(self, ctx, amount: int, bet: str):
+        """
+        This function processes the overall =roulette bet
+
+        e.g.
+        =rbet 100 1, 2, 3
+        =rbet 100 1 2 3
+        =rbet 100 even
+        """
+        success = []
+        failure = []
+        try:
+            if bet.lower() in BET_TYPES:
+                bet = bet.lower()
+            else:
+                bet = int(bet)
+            bet_placed = await self.single_bet(ctx, amount, bet)
+            if bet_placed is True:
+                success.append(bet)
+            else:
+                failure.append(bet_placed)
+        except ValueError:
+            # String of multiple numbers
+            nums = re.findall(r'(\b\d+\b)(?:, )?', bet)
+            if len(nums):
+                for n in nums:
+                    bet_placed = await self.single_bet(ctx, amount, n)
+                    if bet_placed is True:
+                        success.append(n)
+                    else:
+                        failure.append(bet_placed)
+            else:
+                return await ctx.send(f"{ctx.author.display_name}, that is not a valid option.")
+
+        if len(success):
+            await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))} for a total of {humanize_number(len(success) * amount)} {await bank.get_currency_name(ctx.guild)}.")
+        if len(failure):
+            await ctx.send('\n'.join(failure))
+            # await ctx.send(f"{ctx.author.display_name}, no bets placed on {', '.join(map(str, failure))} due to wallet balance, duplicate bets, etc.")
 
     async def payout(self, ctx, winningnum, bets):
         msg = []
@@ -147,7 +166,7 @@ class Roulette(MixinMeta):
             odd_even = "odd"
         else:
             odd_even = "even"
-        
+
         # Determine 1st half/2nd half; exclude 0
         if winningnum == 0:
             half = None
@@ -243,12 +262,7 @@ class Roulette(MixinMeta):
             return await ctx.send(f"{ctx.author.display_name}, your bet must be greater than {humanize_number(minbet)}.")
         if amount > maxbet:
             return await ctx.send(f"{ctx.author.display_name}, your bet must be less than {humanize_number(maxbet)}.")
-        betret = await self.betting(ctx, amount, bet)
-        if betret.get("failed") is not None:
-            return await ctx.send(betret["failed"])
-        await ctx.send(
-            f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {bet}."
-        )
+        return await self.betting(ctx, amount, bet)
 
     async def roulette_spin(self, ctx, time):
         async with ctx.typing():
