@@ -125,7 +125,7 @@ class Roulette(MixinMeta):
         success = []
         failure = []
 
-        bets = re.split(',| ', bet)
+        bets = bet.split(',')
         for b in bets:
             parsed_bet = ""
             trimmed_bet = b.strip()
