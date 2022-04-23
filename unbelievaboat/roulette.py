@@ -115,7 +115,6 @@ class Roulette(MixinMeta):
             return
 
 
-
     async def betting(self, ctx, amount, bet: str):
         success = []
         try:
@@ -131,7 +130,7 @@ class Roulette(MixinMeta):
                 nums = re.findall(r'\b\d+\b', bet)
                 for n in nums:
                     if await self.single_bet(ctx, amount, n):
-                        success.append(bet)
+                        success.append(n)
             else:
                 return await ctx.send(f"{ctx.author.display_name}, not a valid option")
         await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))}.")
