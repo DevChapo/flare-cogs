@@ -98,23 +98,20 @@ class Roulette(MixinMeta):
         try:
             n = int(selection)
             if n < 0 or n > 36:
-                await ctx.send(f"{ctx.author.display_name}, your bet ({n}) must be between 0 and 36.")
-                return
+                return f"{ctx.author.display_name}, your bet ({n}) must be between 0 and 36."
         except ValueError:
             pass
 
         for better in self.roulettegames[ctx.guild.id][bet_key]:
             if better.get(selection, False) and better[selection]["user"] == ctx.author.id:
-                await ctx.send(f"{ctx.author.display_name}, you cannot make a duplicate bet on ({selection}).")
-                return
+                return f"{ctx.author.display_name}, you cannot make a duplicate bet on ({selection})."
 
         try:
             await self.roulettewithdraw(ctx, amount)
             self.roulettegames[ctx.guild.id][bet_key].append({selection: {"user": ctx.author.id, "amount": amount}})
             return True
         except ValueError:
-            await ctx.send(f"{ctx.author.display_name}, you do not have enough funds to complete this bet ({selection}).")
-            return
+            return f"{ctx.author.display_name}, you do not have enough funds to complete this bet ({selection})."
 
     async def betting(self, ctx, amount: int, bet: str):
         """
@@ -126,32 +123,35 @@ class Roulette(MixinMeta):
         =rbet 100 even
         """
         success = []
-        # failure = []
+        failure = []
         try:
             if bet.lower() in BET_TYPES:
-                if await self.single_bet(ctx, amount, bet):
-                    success.append(bet.lower())
+                bet = bet.lower()
             else:
                 bet = int(bet)
-                await self.single_bet(ctx, amount, bet)
+            bet_placed = await self.single_bet(ctx, amount, bet)
+            if bet_placed is True:
                 success.append(bet)
+            else:
+                failure.append(bet_placed)
         except ValueError:
             # String of multiple numbers
             nums = re.findall(r'(\b\d+\b)(?:, )?', bet)
             if len(nums):
                 for n in nums:
-                    if await self.single_bet(ctx, amount, n) is True:
+                    bet_placed = await self.single_bet(ctx, amount, n)
+                    if bet_placed is True:
                         success.append(n)
-                    # else:
-                    #     failure.append(n)
-                    #     break
+                    else:
+                        failure.append(bet_placed)
             else:
                 return await ctx.send(f"{ctx.author.display_name}, that is not a valid option.")
 
         if len(success):
             await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))} for a total of {humanize_number(len(success) * amount)} {await bank.get_currency_name(ctx.guild)}.")
-        # if len(failure):
-        #     await ctx.send(f"{ctx.author.display_name}, no bets placed on {', '.join(map(str, failure))} due to wallet balance, duplicate bets, etc.")
+        if len(failure):
+            await ctx.send(', '.join(failure))
+            # await ctx.send(f"{ctx.author.display_name}, no bets placed on {', '.join(map(str, failure))} due to wallet balance, duplicate bets, etc.")
 
     async def payout(self, ctx, winningnum, bets):
         msg = []
