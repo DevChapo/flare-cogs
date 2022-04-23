@@ -105,8 +105,9 @@ class Roulette(MixinMeta):
 
         for better in self.roulettegames[ctx.guild.id][bet_key]:
             if better.get(selection, False) and better[selection]["user"] == ctx.author.id:
-                await ctx.send(f"{ctx.author.display_name}, you cannot make duplicate bets ({selection}).")
+                await ctx.send(f"{ctx.author.display_name}, you cannot make a duplicate bet on ({selection}).")
                 return
+
         try:
             await self.roulettewithdraw(ctx, amount)
             self.roulettegames[ctx.guild.id][bet_key].append({selection: {"user": ctx.author.id, "amount": amount}})
@@ -125,7 +126,7 @@ class Roulette(MixinMeta):
         =rbet 100 even
         """
         success = []
-        failure = []
+        # failure = []
         try:
             if bet.lower() in BET_TYPES:
                 if await self.single_bet(ctx, amount, bet):
@@ -138,19 +139,19 @@ class Roulette(MixinMeta):
             # String of multiple numbers
             nums = re.findall(r'(\b\d+\b)(?:, )?', bet)
             if len(nums):
-                for idx, n in enumerate(nums):
-                    if await self.single_bet(ctx, amount, n):
+                for n in nums:
+                    if await self.single_bet(ctx, amount, n) is True:
                         success.append(n)
-                    else:
-                        failure = nums[idx:]
-                        break
+                    # else:
+                    #     failure.append(n)
+                    #     break
             else:
                 return await ctx.send(f"{ctx.author.display_name}, that is not a valid option.")
 
         if len(success):
             await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))} for a total of {humanize_number(len(success) * amount)} {await bank.get_currency_name(ctx.guild)}.")
-        if len(failure):
-            await ctx.send(f"{ctx.author.display_name}, no bets placed on {', '.join(map(str, failure))} due to wallet balance, duplicate bets, etc.")
+        # if len(failure):
+        #     await ctx.send(f"{ctx.author.display_name}, no bets placed on {', '.join(map(str, failure))} due to wallet balance, duplicate bets, etc.")
 
     async def payout(self, ctx, winningnum, bets):
         msg = []
