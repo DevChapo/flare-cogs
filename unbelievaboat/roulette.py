@@ -117,19 +117,20 @@ class Roulette(MixinMeta):
         try:
             bet = int(bet)
             await self.single_bet(ctx, amount, bet)
+            success.append(bet)
         except ValueError:
             if bet.lower() in BET_TYPES:
                 await self.single_bet(ctx, amount, bet)
+                success.append(bet.lower())
             # String of multiple numbers
             elif re.findall(r'\b\d+\b', bet):
                 nums = re.findall(r'\b\d+\b', bet)
                 for n in nums:
                     if await self.single_bet(ctx, amount, n):
                         success.append(bet)
-                bet = ', '.join([str(x) for x in success])
             else:
                 return await ctx.send(f"{ctx.author.display_name}, not a valid option")
-        await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {bet}.")
+        await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))}.")
 
     async def payout(self, ctx, winningnum, bets):
         msg = []
