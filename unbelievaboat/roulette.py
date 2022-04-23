@@ -122,15 +122,15 @@ class Roulette(MixinMeta):
             if await self.single_bet(ctx, amount, bet):
                 success.append(bet)
         except ValueError:
-            if bet.lower() in BET_TYPES:
-                if await self.single_bet(ctx, amount, bet):
-                    success.append(bet.lower())
             # String of multiple numbers
-            elif re.findall(r'\b\d+\b', bet):
-                nums = re.findall(r'\b\d+\b', bet)
+            nums = re.findall(r'(\b\d+\b)(?:, )?', bet)
+            if len(nums):
                 for n in nums:
                     if await self.single_bet(ctx, amount, n):
                         success.append(n)
+            elif bet.lower() in BET_TYPES:
+                if await self.single_bet(ctx, amount, bet):
+                    success.append(bet.lower())
             else:
                 return await ctx.send(f"{ctx.author.display_name}, not a valid option")
         if len(success):
