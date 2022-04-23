@@ -90,7 +90,7 @@ class Roulette(MixinMeta):
         This function processes a single bet, which can sometimes be part of a larger bet string.
         """
         bet_key = 'number'
-        if str(selection.lower()) in BET_TYPES:
+        if str(selection).lower() in BET_TYPES:
             bet_key = BET_TYPES[selection.lower()]
         elif selection == '0':
             bet_key = 'zero'
