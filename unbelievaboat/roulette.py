@@ -90,7 +90,7 @@ class Roulette(MixinMeta):
         This function processes a single bet, which can sometimes be part of a larger bet string.
         """
         bet_key = 'number'
-        if selection.lower() in BET_TYPES:
+        if str(selection).lower() in BET_TYPES:
             bet_key = BET_TYPES[selection.lower()]
         elif selection == '0':
             bet_key = 'zero'
@@ -125,7 +125,7 @@ class Roulette(MixinMeta):
         success = []
         failure = []
         try:
-            if bet.lower() in BET_TYPES:
+            if str(bet).lower() in BET_TYPES:
                 bet = bet.lower()
             else:
                 bet = int(bet)
@@ -151,7 +151,6 @@ class Roulette(MixinMeta):
             await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))} for a total of {humanize_number(len(success) * amount)} {await bank.get_currency_name(ctx.guild)}.")
         if len(failure):
             await ctx.send('\n'.join(failure))
-            # await ctx.send(f"{ctx.author.display_name}, no bets placed on {', '.join(map(str, failure))} due to wallet balance, duplicate bets, etc.")
 
     async def payout(self, ctx, winningnum, bets):
         msg = []
