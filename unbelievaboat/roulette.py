@@ -129,9 +129,9 @@ class Roulette(MixinMeta):
         success = []
         failure = []
         try:
-            int(bet)
-            if await self.single_bet(ctx, amount, bet):
-                success.append(bet)
+            bet = int(bet)
+            await self.single_bet(ctx, amount, bet)
+            success.append(bet)
         except ValueError:
             # String of multiple numbers
             nums = re.findall(r'(\b\d+\b)(?:, )?', bet)
@@ -147,6 +147,7 @@ class Roulette(MixinMeta):
                     success.append(bet.lower())
             else:
                 return await ctx.send(f"{ctx.author.display_name}, that is not a valid option.")
+
         if len(success):
             await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))} for a total of {humanize_number(len(success) * amount)} {await bank.get_currency_name(ctx.guild)}.")
         else:
