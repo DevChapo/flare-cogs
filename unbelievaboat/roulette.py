@@ -96,9 +96,9 @@ class Roulette(MixinMeta):
             bet_key = 'zero'
 
         try:
-            n = int(selection)
-            if n < 0 or n > 36:
-                return f"{ctx.author.display_name}, your bet ({n}) must be between 0 and 36."
+            selection = int(selection)
+            if selection < 0 or selection > 36:
+                return f"{ctx.author.display_name}, your bet ({selection}) must be between 0 and 36."
         except ValueError:
             pass
 
@@ -152,59 +152,59 @@ class Roulette(MixinMeta):
         if len(failure):
             await ctx.send('\n'.join(failure))
 
-    async def payout(self, ctx, winningnum, bets):
+    async def payout(self, ctx, number, game_bets):
         msg = []
         conf = await self.configglobalcheck(ctx)
         payouts = await conf.roulette_payouts()
-        color = NUMBERS[winningnum]
+        color = NUMBERS[number]
 
         # Determine odd/even; exclude 0
-        if winningnum == 0:
+        if number == 0:
             odd_even = None
-        elif winningnum % 2 != 0:
+        elif number % 2 != 0:
             odd_even = "odd"
         else:
             odd_even = "even"
 
         # Determine 1st half/2nd half; exclude 0
-        if winningnum == 0:
+        if number == 0:
             half = None
-        elif winningnum <= 18:
+        elif number <= 18:
             half = "1st half"
         else:
             half = "2nd half"
 
         dozen = "N/A"
-        if bets["dozen"]:
-            if winningnum == 0:
+        if game_bets["dozen"]:
+            if number == 0:
                 dozen = "No dozen winning bet."
-            elif winningnum <= 12:
+            elif number <= 12:
                 dozen = "1st dozen"
-            elif winningnum <= 24:
+            elif number <= 24:
                 dozen = "2nd dozen"
             else:
                 dozen = "3rd dozen"
         column = "N/A"
-        if bets["column"]:
-            if winningnum == 0:
+        if game_bets["column"]:
+            if number == 0:
                 pass
-            elif winningnum in COLUMNS[0]:
+            elif number in COLUMNS[0]:
                 column = "1st column"
-            elif winningnum in COLUMNS[1]:
+            elif number in COLUMNS[1]:
                 column = "2nd column"
             else:
                 column = "3rd column"
         payout_types = {
-            "zero": winningnum,
+            "zero": number,
             "color": color,
-            "number": winningnum,
+            "number": number,
             "odd_or_even": odd_even,
             "halfs": half,
             "dozen": dozen,
             "column": column,
         }
         for bettype, value in payout_types.items():
-            for bet in bets[bettype]:
+            for bet in game_bets[bettype]:
                 bet_type = list(bet.keys())[0]
                 if bet_type == value:
                     betinfo = list(bet.values())[0]
