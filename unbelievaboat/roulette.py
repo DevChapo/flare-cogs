@@ -89,10 +89,12 @@ class Roulette(MixinMeta):
         try:
             n = int(selection)
         except ValueError:
-            return await ctx.send(f"{ctx.author.display_name}, your bet ({selection}) was not recognized as a valid number.")
+            await ctx.send(f"{ctx.author.display_name}, your bet ({selection}) was not recognized as a valid number.")
+            return
 
         if n < 0 or n > 36:
-            return await ctx.send(f"{ctx.author.display_name}, your bet ({n}) must be between 0 and 36.")
+            await ctx.send(f"{ctx.author.display_name}, your bet ({n}) must be between 0 and 36.")
+            return
 
         bet_key = 'number'
         if n == 0:
@@ -102,13 +104,15 @@ class Roulette(MixinMeta):
 
         for better in self.roulettegames[ctx.guild.id][bet_key]:
             if better.get(n, False) and better[n]["user"] == ctx.author.id:
-                return await ctx.send(f"{ctx.author.display_name}, you cannot make duplicate bets ({n}).")
+                await ctx.send(f"{ctx.author.display_name}, you cannot make duplicate bets ({n}).")
+                return
         try:
             await self.roulettewithdraw(ctx, amount)
             self.roulettegames[ctx.guild.id][bet_key].append({n: {"user": ctx.author.id, "amount": amount}})
-            return selection
+            return True
         except ValueError:
-            return await ctx.send(f"{ctx.author.display_name}, you do not have enough funds to complete this bet ({n}).")
+            await ctx.send(f"{ctx.author.display_name}, you do not have enough funds to complete this bet ({n}).")
+            return
 
 
 
@@ -116,12 +120,12 @@ class Roulette(MixinMeta):
         success = []
         try:
             bet = int(bet)
-            await self.single_bet(ctx, amount, bet)
-            success.append(bet)
+            if await self.single_bet(ctx, amount, bet):
+                success.append(bet)
         except ValueError:
             if bet.lower() in BET_TYPES:
-                await self.single_bet(ctx, amount, bet)
-                success.append(bet.lower())
+                if await self.single_bet(ctx, amount, bet):
+                    success.append(bet.lower())
             # String of multiple numbers
             elif re.findall(r'\b\d+\b', bet):
                 nums = re.findall(r'\b\d+\b', bet)
