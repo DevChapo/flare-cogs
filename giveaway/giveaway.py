@@ -48,6 +48,7 @@ class Giveaway(commands.Cog):
         await asyncio.sleep(60)
         cache_msg = discord.utils.get(self.bot.cached_messages, id=msg.id)
 
+        users = []
         recipients = []
         for reaction in cache_msg.reactions:
             if reaction.emoji == '✅':
@@ -61,5 +62,8 @@ class Giveaway(commands.Cog):
 
         payout = int(amount / len(recipients))
         for user in recipients:
+            users.append(user.display_name)
             await bank.deposit_credits(user, payout)
-            await ctx.send(f"{user.display_name} receives {payout} {currency} from {ctx.author.display_name}'s giveaway.")
+        
+        users_string = ', '.join(users)
+        await ctx.send(f"{users_string} receives {payout} {currency} from {ctx.author.display_name}'s giveaway.")
