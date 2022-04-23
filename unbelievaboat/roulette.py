@@ -124,28 +124,25 @@ class Roulette(MixinMeta):
         """
         success = []
         failure = []
-        try:
-            if str(bet).lower() in BET_TYPES:
-                bet = bet.lower()
-            else:
-                bet = int(bet)
-            bet_placed = await self.single_bet(ctx, amount, bet)
-            if bet_placed is True:
-                success.append(bet)
-            else:
-                failure.append(bet_placed)
-        except ValueError:
-            # String of multiple numbers
-            nums = re.findall(r'(\b\d+\b)(?:, )?', bet)
-            if len(nums):
-                for n in nums:
-                    bet_placed = await self.single_bet(ctx, amount, n)
+
+        bets = re.split(',| ', bet)
+        for b in bets:
+            parsedBet = ""
+            trimmedBet = b.strip()
+            if trimmedBet:
+                if str(trimmedBet).lower() in BET_TYPES:
+                    parsedBet = trimmedBet.lower()
+                else:
+                    try:
+                        parsedBet = int(trimmedBet)
+                    except ValueError:
+                        failure.append(f"{ctx.author.display_name}, invalid bet (f{trimmedBet}).")
+                if parsedBet:
+                    bet_placed = await self.single_bet(ctx, amount, parsedBet)
                     if bet_placed is True:
-                        success.append(n)
+                        success.append(parsedBet)
                     else:
                         failure.append(bet_placed)
-            else:
-                return await ctx.send(f"{ctx.author.display_name}, that is not a valid option.")
 
         if len(success):
             await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))} for a total of {humanize_number(len(success) * amount)} {await bank.get_currency_name(ctx.guild)}.")
