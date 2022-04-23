@@ -137,7 +137,7 @@ class Roulette(MixinMeta):
                         parsed_bet = int(trimmed_bet)
                     except ValueError:
                         failure.append(f"{ctx.author.display_name}, invalid bet ({trimmed_bet}).")
-                if len(parsed_bet):
+                if parsed_bet:
                     bet_placed = await self.single_bet(ctx, amount, parsed_bet)
                     if bet_placed is True:
                         success.append(parsed_bet)
