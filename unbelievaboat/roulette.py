@@ -150,10 +150,8 @@ class Roulette(MixinMeta):
 
         if len(success):
             await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))} for a total of {humanize_number(len(success) * amount)} {await bank.get_currency_name(ctx.guild)}.")
-        else:
-            await ctx.send(f"{ctx.author.display_name}, no bets were placed.")
         if len(failure):
-            await ctx.send(f"{ctx.author.display_name}, bets not placed on {', '.join(map(str, failure))} due to wallet balance, duplicate bets, etc.")
+            await ctx.send(f"{ctx.author.display_name}, no bets placed on {', '.join(map(str, failure))} due to wallet balance, duplicate bets, etc.")
 
     async def payout(self, ctx, winningnum, bets):
         msg = []
@@ -264,7 +262,6 @@ class Roulette(MixinMeta):
             return await ctx.send(f"{ctx.author.display_name}, your bet must be greater than {humanize_number(minbet)}.")
         if amount > maxbet:
             return await ctx.send(f"{ctx.author.display_name}, your bet must be less than {humanize_number(maxbet)}.")
-
         return await self.betting(ctx, amount, bet)
 
     async def roulette_spin(self, ctx, time):
