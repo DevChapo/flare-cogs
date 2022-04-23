@@ -144,7 +144,7 @@ class Roulette(MixinMeta):
             else:
                 return await ctx.send(f"{ctx.author.display_name}, that is not a valid option.")
         if len(success):
-            await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))}.")
+            await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))} for a total of {len(success) * amount} {await bank.get_currency_name(ctx.guild)}.")
         else:
             return await ctx.send(f"{ctx.author.display_name}, no bets were placed.")
 
