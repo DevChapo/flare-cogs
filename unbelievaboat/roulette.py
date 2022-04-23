@@ -114,7 +114,6 @@ class Roulette(MixinMeta):
             await ctx.send(f"{ctx.author.display_name}, you do not have enough funds to complete this bet ({n}).")
             return
 
-
     async def betting(self, ctx, amount, bet: str):
         success = []
         try:
