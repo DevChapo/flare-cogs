@@ -127,27 +127,40 @@ class Roulette(MixinMeta):
 
         bets = re.split(',| ', bet)
         for b in bets:
-            parsedBet = ""
-            trimmedBet = b.strip()
-            if trimmedBet:
-                if str(trimmedBet).lower() in BET_TYPES:
-                    parsedBet = trimmedBet.lower()
+            parsed_bet = ""
+            trimmed_bet = b.strip()
+            if len(trimmed_bet):
+                if str(trimmed_bet).lower() in BET_TYPES:
+                    parsed_bet = trimmed_bet.lower()
                 else:
                     try:
-                        parsedBet = int(trimmedBet)
+                        parsed_bet = int(trimmed_bet)
                     except ValueError:
-                        failure.append(f"{ctx.author.display_name}, invalid bet (f{trimmedBet}).")
-                if parsedBet:
-                    bet_placed = await self.single_bet(ctx, amount, parsedBet)
+                        failure.append(f"{ctx.author.display_name}, invalid bet (f{trimmed_bet}).")
+                if len(parsed_bet):
+                    bet_placed = await self.single_bet(ctx, amount, parsed_bet)
                     if bet_placed is True:
-                        success.append(parsedBet)
+                        success.append(parsed_bet)
                     else:
                         failure.append(bet_placed)
 
         if len(success):
             await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))} for a total of {humanize_number(len(success) * amount)} {await bank.get_currency_name(ctx.guild)}.")
         if len(failure):
-            await ctx.send('\n'.join(failure))
+            length_limited_message = ""
+            failure_count = len(failure)
+            for i, fail in enumerate(failure):
+                if (len(length_limited_message) + len(fail) < 1900):
+                    length_limited_message = length_limited_message + '\n' + fail
+                else:
+                    # Messages overflows, send it and reset the length_limited_message
+                    await ctx.send(length_limited_message)
+                    length_limited_message = fail
+
+                # Last element in array, make sure the message is sent
+                if (failure_count-1 == i and len(length_limited_message)):
+                    await ctx.send(length_limited_message)
+
 
     async def payout(self, ctx, number, game_bets):
         msg = []
