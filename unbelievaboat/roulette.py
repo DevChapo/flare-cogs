@@ -85,7 +85,10 @@ class Roulette(MixinMeta):
         else:
             await bank.withdraw_credits(ctx.author, bet)
 
-    async def single_bet(self, ctx, amount, selection):
+    async def single_bet(self, ctx, amount: int, selection):
+        """
+        This function processes a single bet, which can sometimes be part of a larger bet string.
+        """
         try:
             n = int(selection)
         except ValueError:
@@ -114,10 +117,18 @@ class Roulette(MixinMeta):
             await ctx.send(f"{ctx.author.display_name}, you do not have enough funds to complete this bet ({n}).")
             return
 
-    async def betting(self, ctx, amount, bet: str):
+    async def betting(self, ctx, amount: int, bet: str):
+        """
+        This function processes the overall =roulette bet
+
+        e.g.
+        =rbet 100 1, 2, 3
+        =rbet 100 1 2 3
+        =rbet 100 even
+        """
         success = []
         try:
-            bet = int(bet)
+            int(bet)
             if await self.single_bet(ctx, amount, bet):
                 success.append(bet)
         except ValueError:
@@ -131,11 +142,11 @@ class Roulette(MixinMeta):
                 if await self.single_bet(ctx, amount, bet):
                     success.append(bet.lower())
             else:
-                return await ctx.send(f"{ctx.author.display_name}, not a valid option")
+                return await ctx.send(f"{ctx.author.display_name}, that is not a valid option.")
         if len(success):
             await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))}.")
         else:
-            return await ctx.send(f"{ctx.author.display_name}, that is not a valid bet format. No bets were placed.")
+            return await ctx.send(f"{ctx.author.display_name}, no bets were placed.")
 
     async def payout(self, ctx, winningnum, bets):
         msg = []
