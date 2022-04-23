@@ -61,6 +61,11 @@ class Giveaway(commands.Cog):
             return
 
         payout = int(amount / len(recipients))
+        if payout <= 0:
+            await bank.deposit_credits(ctx.author, amount)
+            await ctx.send(f"Returned {ctx.author.display_name}'s {amount} {currency} because they're too poor to do real charity.")
+            return
+        
         for user in recipients:
             users.append(user.display_name)
             await bank.deposit_credits(user, payout)
