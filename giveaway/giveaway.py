@@ -66,4 +66,4 @@ class Giveaway(commands.Cog):
             await bank.deposit_credits(user, payout)
         
         users_string = ', '.join(users)
-        await ctx.send(f"{users_string} receives {payout} {currency} from {ctx.author.display_name}'s giveaway.")
+        await ctx.send(f"{users_string} receive {payout} {currency} from {ctx.author.display_name}'s giveaway.")
