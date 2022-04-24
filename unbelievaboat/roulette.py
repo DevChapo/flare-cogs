@@ -8,6 +8,7 @@ import tabulate
 from redbot.core import bank, checks, commands
 from redbot.core.errors import BalanceTooHigh
 from redbot.core.utils.chat_formatting import box, humanize_number, humanize_timedelta
+from redbot.core.utils.menus import DEFAULT_CONTROLS, menu
 
 from .abc import MixinMeta
 from .checks import check_global_setting_admin, roulette_disabled_check, wallet_disabled_check
@@ -213,6 +214,16 @@ class Roulette(MixinMeta):
             "dozen": dozen,
             "column": column,
         }
+
+        players = {}
+        for k, v in game_bets.items():
+            if type(v) is bool:
+                continue
+            
+            for item in v:
+                for key, val in item.items():
+                    players[ctx.guild.get_member(val['user'])] = 0
+
         for bettype, value in payout_types.items():
             for bet in game_bets[bettype]:
                 bet_type = list(bet.keys())[0]
@@ -228,6 +239,7 @@ class Roulette(MixinMeta):
                     print(payouts)
                     print("---------")
                     payout = betinfo["amount"] + (betinfo["amount"] * payouts[bettype])
+                    players[user] += payout
                     if not await self.walletdisabledcheck(ctx):
                         user_conf = await self.configglobalcheckuser(user)
                         wallet = await user_conf.wallet()
@@ -243,7 +255,26 @@ class Roulette(MixinMeta):
                             payout = e.max_bal - await bank.get_balance(user)
                             await bank.set_balance(user, e.max_bal)
                     msg.append([bet_type, humanize_number(payout), user.display_name])
+                else:
+                    betinfo = list(bet.values())[0]
+                    user = ctx.guild.get_member(betinfo['user'])
+                    players[user] -= betinfo['amount']
+                    
+        await self.update_leaderboard(players)
         return msg
+
+    async def update_leaderboard(self, players):
+        if not players:
+            return
+
+        for player in players.keys():
+            conf = await self.configglobalcheckuser(player)
+            stats = await conf.roulette_stats()
+
+            stats['games'] += 1
+            stats['total'] += players[player]
+
+            await conf.roulette_stats.set(stats)        
 
     @commands.group(invoke_without_command=True)
     @commands.guild_only()
@@ -329,6 +360,66 @@ class Roulette(MixinMeta):
         )
         asyncio.create_task(self.roulette_spin(ctx, time))
 
+    @roulette_disabled_check()
+    @roulette.command(name="leaderboard")
+    async def roulette_leaderboard(self, ctx, top: int = 10):
+        """Print the roulette leaderboard."""
+        if top < 1:
+            top = 10
+
+        # Define guild and grab all relevant accounts. Sort by total pnl
+        guild = ctx.guild
+        accounts = await self.config.all_members(guild)
+        r_list = sorted(accounts.items(), key=lambda x: x[1]["roulette_stats"]["total"], reverse=True)[:top]
+
+        # Try to get balance length for optimal formatting. Long names still
+        # make it look ugly.
+        try:
+            bal_len = len(str(r_list[0][1]["roulette_stats"]["total"]))  
+        except IndexError:
+            return await ctx.send("There are no users on the roulette leaderboard.")
+        
+        # Creating header
+        pound_len = len(str(len(r_list)))
+        header = "# Roulette Leaderboard\n\n{pound:{pound_len}}{score:{bal_len}}{average:{bal_len}}{name}\n".format(
+            pound="#", name="Name", score="Profit", bal_len=bal_len+6, pound_len=pound_len+2,
+            average="Average"
+        )
+        
+        # Creating leaderboard positions
+        pos = 1
+        temp_msg = header
+        highscores = []
+        for acc in r_list:
+            try:
+                name = guild.get_member(acc[0]).display_name
+            except AttributeError:
+                user_id = f"({acc[0]})" if await ctx.bot.is_owner(ctx.author) else ""
+                name = f"{user_id}"
+            
+            balance = acc[1]["roulette_stats"]["total"]
+            try:
+                average = balance / acc[1]["roulette_stats"]["games"]
+            except:
+                average = 0
+
+            if acc[0] != ctx.author.id:
+                temp_msg += f"{pos}. {balance: <{bal_len+5}} {average: <{bal_len+5}} {name}\n"
+            else:
+                temp_msg += f"{pos}. {balance: <{bal_len+5}} {average: <{bal_len+5}} <<{ctx.author.display_name}>>\n"
+
+            if pos % 10 == 0:
+                highscores.append(box(temp_msg, lang="md"))
+                temp_msg = header
+            
+            pos += 1
+
+        if temp_msg != header:
+            highscores.append(box(temp_msg, lang="md"))
+
+        if highscores:
+            await menu(ctx, highscores, DEFAULT_CONTROLS)
+
     @checks.admin_or_permissions(manage_guild=True)
     @check_global_setting_admin()
     @commands.guild_only()
@@ -413,3 +504,4 @@ class Roulette(MixinMeta):
 
         embed.add_field(name="Payout Settings", value=payoutsmsg)
         await ctx.send(embed=embed)
+

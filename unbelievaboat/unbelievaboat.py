@@ -66,6 +66,7 @@ class Unbelievaboat(Wallet, Roulette, SettingsMixin, commands.Cog, metaclass=Com
                 "halfs": 1,
                 "column": 2,
             },
+            
             "betting": {"max": 10000, "min": 100},
             "wallet_max": 50000,
         }
@@ -80,6 +81,12 @@ class Unbelievaboat(Wallet, Roulette, SettingsMixin, commands.Cog, metaclass=Com
             "wallet": 0,
             "winnings": 0,
             "losses": 0,
+            "roulette_stats": {
+                "games" : 0,
+                "total" : 0
+
+                # Possibly implement individual numbers?
+            }
         }
         self.roulettegames = {}
         self.config = Config.get_conf(self, identifier=95932766180343808, force_registration=True)
