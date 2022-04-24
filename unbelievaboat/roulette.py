@@ -337,6 +337,16 @@ class Roulette(MixinMeta):
         del self.roulettegames[ctx.guild.id]
 
     @roulette_disabled_check()
+    @roulette.command(name="debug")
+    async def roulette_debug(self, ctx):
+        """Debugging."""
+        guild = ctx.guild
+        user = ctx.guild.get_member(209071317905965056)
+        conf = await self.configglobaluser(user)
+        stats = await conf.roulette_stats()
+        await ctx.send(stats)
+
+    @roulette_disabled_check()
     @roulette.command(name="start")
     async def roulette_start(self, ctx):
         """Start a game of roulette."""
