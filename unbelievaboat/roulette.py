@@ -339,16 +339,6 @@ class Roulette(MixinMeta):
         del self.roulettegames[ctx.guild.id]
 
     @roulette_disabled_check()
-    @roulette.command(name="debug")
-    async def roulette_debug(self, ctx):
-        """Debugging."""
-        guild = ctx.guild
-        user = ctx.guild.get_member(209071317905965056)
-        conf = await self.configglobalcheckuser(user)
-        stats = await conf.roulette_stats()
-        await ctx.send(stats)
-
-    @roulette_disabled_check()
     @roulette.command(name="start")
     async def roulette_start(self, ctx):
         """Start a game of roulette."""
@@ -397,6 +387,8 @@ class Roulette(MixinMeta):
             top = 10
 
         base_embed = discord.Embed(title=("Roulette Leaderboard"))
+        base_embed.set_author(name=guild.name)
+
         if await bank.is_global():
             raw_accounts = await self.config.all_users()
             if guild is not None:
@@ -408,7 +400,9 @@ class Roulette(MixinMeta):
             raw_accounts = await self.config.all_members(guild)
 
         roulette_list = sorted(raw_accounts.items(), key=lambda x: x[1]["roulette_stats"]["total"], reverse=True)[:top]
-        base_embed.set_author(name=guild.name)
+        for tuple in roulette_list:
+            if tuple[1]['roulette_stats']['games'] == 0:
+                roulette_list.remove(tuple)
 
         try:
             total_len = len(str(roulette_list[0][1]["roulette_stats"]["total"]))
@@ -428,9 +422,6 @@ class Roulette(MixinMeta):
         temp_msg = header
 
         for acc in roulette_list:
-            #if acc[1]['roulette_stats']['total'] == 0:
-            #    continue
-
             try:
                 name = guild.get_member(acc[0]).display_name
             except AttributeError:
