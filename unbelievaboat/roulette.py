@@ -361,7 +361,7 @@ class Roulette(MixinMeta):
             "The roulette wheel will be spun in {} seconds.".format(time), delete_after=time
         )
         # set 5 to time
-        asyncio.create_task(self.roulette_spin(ctx, time))
+        asyncio.create_task(self.roulette_spin(ctx, 1))
 
     @roulette_disabled_check()
     @roulette.command(name="leaderboard")
@@ -400,6 +400,8 @@ class Roulette(MixinMeta):
             raw_accounts = await self.config.all_members(guild)
 
         roulette_list = sorted(raw_accounts.items(), key=lambda x: x[1]["roulette_stats"]["total"], reverse=True)[:top]
+        await ctx.send(roulette_list[0])
+        await ctx.send(type(roulette_list[0]))
         for tuple in roulette_list:
             if tuple[1]['roulette_stats']['total'] == 0:
                 roulette_list.remove(tuple)
