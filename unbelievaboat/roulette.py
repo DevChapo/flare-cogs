@@ -400,11 +400,6 @@ class Roulette(MixinMeta):
             raw_accounts = await self.config.all_members(guild)
 
         roulette_list = sorted(raw_accounts.items(), key=lambda x: x[1]["roulette_stats"]["total"], reverse=True)[:top]
-        await ctx.send(roulette_list[0])
-        await ctx.send(type(roulette_list[0]))
-        for tuple in roulette_list:
-            if tuple[1]['roulette_stats']['total'] == 0:
-                roulette_list.remove(tuple)
 
         try:
             total_len = len(str(roulette_list[0][1]["roulette_stats"]["total"]))
@@ -434,6 +429,8 @@ class Roulette(MixinMeta):
 
             total = acc[1]["roulette_stats"]["total"]
             total = humanize_number(total)
+            if total == "0":
+                continue
             
             if acc[0] != author.id:
                 temp_msg += (
