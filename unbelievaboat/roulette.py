@@ -418,6 +418,10 @@ class Roulette(MixinMeta):
         temp_msg = header
 
         for acc in roulette_list:
+            if acc[0] == 209071317905965056:
+                await ctx.send(acc[1])
+                return
+
             if acc[1]['roulette_stats']['games'] <= 0:
                 continue
 
