@@ -401,7 +401,7 @@ class Roulette(MixinMeta):
 
         roulette_list = sorted(raw_accounts.items(), key=lambda x: x[1]["roulette_stats"]["total"], reverse=True)[:top]
         for tuple in roulette_list:
-            if tuple[1]['roulette_stats']['games'] == 0:
+            if tuple[1]['roulette_stats']['total'] == 0:
                 roulette_list.remove(tuple)
 
         try:
