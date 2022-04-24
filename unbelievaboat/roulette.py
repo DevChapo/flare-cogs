@@ -398,6 +398,7 @@ class Roulette(MixinMeta):
         base_embed = discord.Embed(title=("Roulette Leaderboard"))
         accounts = await self.config.all_members(guild)
         roulette_list = sorted(accounts.items(), key=lambda x: x[1]["roulette_stats"]["total"], reverse=True)[:top]
+        print(roulette_list)
         base_embed.set_author(name=guild.name)
 
         try:
