@@ -361,7 +361,7 @@ class Roulette(MixinMeta):
             "The roulette wheel will be spun in {} seconds.".format(time), delete_after=time
         )
         # set 5 to time
-        asyncio.create_task(self.roulette_spin(ctx, 1))
+        asyncio.create_task(self.roulette_spin(ctx, time))
 
     @roulette_disabled_check()
     @roulette.command(name="leaderboard")
