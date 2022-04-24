@@ -265,8 +265,8 @@ class SettingsMixin(MixinMeta):
             else:
                 depositcd = "Ready to use."
 
-        msg = "**{ctx.author.display_name} Cooldowns**:\nWork Cooldown: `{}`\nCrime Cooldown: `{}`\nRob Cooldown: `{}`\nDeposit Cooldown: `{}`".format(
-            workcd, crimecd, robcd, depositcd
+        msg = "**{} Cooldowns**:\n\nWork Cooldown: `{}`\nCrime Cooldown: `{}`\nRob Cooldown: `{}`\nDeposit Cooldown: `{}`".format(
+            ctx.author.display_name, workcd, crimecd, robcd, depositcd
         )
         await ctx.maybe_send_embed(msg)
 
