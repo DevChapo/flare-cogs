@@ -189,11 +189,11 @@ class Unbelievaboat(Wallet, Roulette, SettingsMixin, commands.Cog, metaclass=Com
 
     async def cdnotice(self, user, cooldown, job):
         response = {
-            "work": f"\N{NEGATIVE SQUARED CROSS MARK} You cannot work for another {cooldown}.",
-            "crime": f"\N{NEGATIVE SQUARED CROSS MARK} You cannot commit a crime for another {cooldown}.",
-            "rob": f"\N{NEGATIVE SQUARED CROSS MARK} You cannot rob a person for another {cooldown}.",
-            "withdraw": f"\N{NEGATIVE SQUARED CROSS MARK} You cannot withdraw any more cash for another {cooldown}.",
-            "deposit": f"\N{NEGATIVE SQUARED CROSS MARK} You cannot deposit any more cash for another {cooldown}.",
+            "work": f"\N{CROSS MARK} You cannot work for another {cooldown}.",
+            "crime": f"\N{CROSS MARK} You cannot commit a crime for another {cooldown}.",
+            "rob": f"\N{CROSS MARK} You cannot rob a person for another {cooldown}.",
+            "withdraw": f"\N{CROSS MARK} You cannot withdraw any more cash for another {cooldown}.",
+            "deposit": f"\N{CROSS MARK} You cannot deposit any more cash for another {cooldown}.",
         }
         embed = discord.Embed(colour=discord.Color.red(), description=response[job])
         embed.set_author(name=user, icon_url=user.avatar_url)
