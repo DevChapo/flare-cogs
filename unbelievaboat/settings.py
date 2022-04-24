@@ -256,8 +256,17 @@ class SettingsMixin(MixinMeta):
                 robcd = humanize_timedelta(seconds=jobcd["robcd"] - time)
             else:
                 robcd = "Ready to use."
-        msg = "Work Cooldown: `{}`\nCrime Cooldown: `{}`\nRob Cooldown: `{}`".format(
-            workcd, crimecd, robcd
+        if cd["depositcd"] is None:
+            depositcd = "Ready to use."
+        else:
+            time = int(datetime.datetime.utcnow().timestamp()) - cd["depositcd"]
+            if time < jobcd["depositcd"]:
+                depositcd = humanize_timedelta(seconds=jobcd["depositcd"] - time)
+            else:
+                depositcd = "Ready to use."
+
+        msg = "Work Cooldown: `{}`\nCrime Cooldown: `{}`\nRob Cooldown: `{}`\nDeposit Cooldown: `{}`".format(
+            workcd, crimecd, robcd, depositcd
         )
         await ctx.maybe_send_embed(msg)
 
@@ -273,8 +282,9 @@ class SettingsMixin(MixinMeta):
         workcd = humanize_timedelta(seconds=cooldowns["workcd"])
         robcd = humanize_timedelta(seconds=cooldowns["robcd"])
         crimecd = humanize_timedelta(seconds=cooldowns["crimecd"])
-        cooldownmsg = "Work Cooldown: `{}`\nCrime Cooldown: `{}`\nRob Cooldown: `{}`".format(
-            workcd, crimecd, robcd
+        depositcd = humanize_timedelta(seconds=cooldowns["depositcd"])
+        cooldownmsg = "Work Cooldown: `{}`\nCrime Cooldown: `{}`\nRob Cooldown: `{}`\n Deposit Cooldown: `{}`".format(
+            workcd, crimecd, robcd, depositcd
         )
         embed = discord.Embed(colour=ctx.author.colour, title="Unbelievaboat Settings")
         embed.add_field(
