@@ -342,7 +342,7 @@ class Roulette(MixinMeta):
         """Debugging."""
         guild = ctx.guild
         user = ctx.guild.get_member(209071317905965056)
-        conf = await self.configglobaluser(user)
+        conf = await self.configglobalcheckuser(user)
         stats = await conf.roulette_stats()
         await ctx.send(stats)
 
