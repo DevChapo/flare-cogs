@@ -370,6 +370,7 @@ class Roulette(MixinMeta):
         await ctx.send(
             "The roulette wheel will be spun in {} seconds.".format(time), delete_after=time
         )
+        # set 5 to time
         asyncio.create_task(self.roulette_spin(ctx, time))
 
     @roulette_disabled_check()
@@ -396,9 +397,17 @@ class Roulette(MixinMeta):
             top = 10
 
         base_embed = discord.Embed(title=("Roulette Leaderboard"))
-        accounts = await self.config.all_members(guild)
-        roulette_list = sorted(accounts.items(), key=lambda x: x[1]["roulette_stats"]["total"], reverse=True)[:top]
-        print(roulette_list)
+        if await bank.is_global():
+            raw_accounts = await self.config.all_users()
+            if guild is not None:
+                tmp = raw_accounts.copy()
+                for acc in tmp:
+                    if not guild.get_member(acc):
+                        del raw_accounts[acc]
+        else:
+            raw_accounts = await self.config.all_members(guild)
+
+        roulette_list = sorted(raw_accounts.items(), key=lambda x: x[1]["roulette_stats"]["total"], reverse=True)[:top]
         base_embed.set_author(name=guild.name)
 
         try:
@@ -420,9 +429,8 @@ class Roulette(MixinMeta):
 
         for acc in roulette_list:
             if acc[0] == 209071317905965056:
-                await ctx.send(acc[1])
-                return
-
+                await ctx.send(acc[1]['roulette_stats'])
+                
             if acc[1]['roulette_stats']['games'] <= 0:
                 continue
 
