@@ -417,6 +417,7 @@ class Roulette(MixinMeta):
         pos = 1
         temp_msg = header
 
+        print(roulette_list[0])
         for acc in roulette_list:
             try:
                 name = guild.get_member(acc[0]).display_name
