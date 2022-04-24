@@ -399,8 +399,11 @@ class Roulette(MixinMeta):
         else:
             raw_accounts = await self.config.all_members(guild)
 
-        roulette_list = sorted(raw_accounts.items(), key=lambda x: x[1]["roulette_stats"]["total"], reverse=True)[:top]
-
+        roulette_list = sorted(
+            [item for item in raw_accounts.items() if item[1]["roulette_stats"]["total"] != 0],
+            key=lambda x: x[1]["roulette_stats"]["total"], reverse=True
+        )[:top]
+        
         try:
             total_len = len(str(roulette_list[0][1]["roulette_stats"]["total"]))
         except IndexError:
@@ -429,8 +432,6 @@ class Roulette(MixinMeta):
 
             total = acc[1]["roulette_stats"]["total"]
             total = humanize_number(total)
-            if total == "0":
-                continue
             
             if acc[0] != author.id:
                 temp_msg += (
