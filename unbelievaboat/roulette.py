@@ -2,9 +2,11 @@ import asyncio
 import datetime
 import random
 import re
-
 import discord
 import tabulate
+
+from math import ceil
+
 from redbot.core import bank, checks, commands
 from redbot.core.errors import BalanceTooHigh
 from redbot.core.utils.chat_formatting import box, humanize_number, humanize_timedelta
@@ -373,62 +375,110 @@ class Roulette(MixinMeta):
     @roulette_disabled_check()
     @roulette.command(name="leaderboard")
     async def roulette_leaderboard(self, ctx, top: int = 10):
-        """Print the roulette leaderboard."""
+        """Print the leaderboard.
+        
+        Defaults to top 10.
+
+        Examples:
+         - `[p]roulette leaderboard`
+         - `[p]roulette leaderboard 50`
+        
+        Arguments:
+         - `<top>` How many positions on the leaderboard to show.
+        """
+
+        guild = ctx.guild
+        author = ctx.author
+        embed_requested = await ctx.embed_requested()
+        footer_message = ("Page {page_num}/{page_len}.")
+
         if top < 1:
             top = 10
 
-        # Define guild and grab all relevant accounts. Sort by total pnl
-        guild = ctx.guild
+        base_embed = discord.Embed(title=("Roulette Leaderboard"))
         accounts = await self.config.all_members(guild)
-        r_list = sorted(accounts.items(), key=lambda x: x[1]["roulette_stats"]["total"], reverse=True)[:top]
+        roulette_list = sorted(accounts.items(), key=lambda x: x[1]["roulette_stats"]["total"], reverse=True)[:top]
+        base_embed.set_author(name=guild.name)
 
-        # Try to get balance length for optimal formatting. Long names still
-        # make it look ugly.
         try:
-            bal_len = len(str(r_list[0][1]["roulette_stats"]["total"]))  
+            total_len = len(str(roulette_list[0][1]["roulette_stats"]["total"]))
         except IndexError:
             return await ctx.send("There are no users on the roulette leaderboard.")
-        
-        # Creating header
-        pound_len = len(str(len(r_list)))
-        header = "# Roulette Leaderboard\n\n{pound:{pound_len}}{score:{bal_len}}{average:{bal_len}}{name}\n".format(
-            pound="#", name="Name", score="Profit", bal_len=bal_len+6, pound_len=pound_len+2,
-            average="Average"
+
+        pound_len = len(str(len(roulette_list)))
+        header = "\n{pound:{pound_len}}{score:{total_len}}{name:15}\n".format(
+            pound="#",
+            name="Name",
+            score="Total",
+            total_len=total_len+6,
+            pound_len=pound_len+3
         )
-        
-        # Creating leaderboard positions
+        highscores = []
         pos = 1
         temp_msg = header
-        highscores = []
-        for acc in r_list:
+
+        for acc in roulette_list:
             try:
                 name = guild.get_member(acc[0]).display_name
             except AttributeError:
-                user_id = f"({acc[0]})" if await ctx.bot.is_owner(ctx.author) else ""
-                name = f"{user_id}"
-            
-            balance = acc[1]["roulette_stats"]["total"]
-            try:
-                average = balance / acc[1]["roulette_stats"]["games"]
-            except:
-                average = 0
+                user_id = ""
+                if await ctx.bot.is_owner(ctx.author):
+                    user_id = f"({str(acc[0])})"
+                name = f"{acc[1]['name']} {user_id}"
 
-            if acc[0] != ctx.author.id:
-                temp_msg += f"{pos}. {balance: <{bal_len+5}} {average: <{bal_len+5}} {name}\n"
+            total = acc[1]["roulette_stats"]["total"]
+            total = humanize_number(total)
+            
+            if acc[0] != author.id:
+                temp_msg += (
+                    f"{f'{humanize_number(pos)}.': <{pound_len+2}} "
+                    f"{total: <{total_len+5}} {name}\n"
+                )
             else:
-                temp_msg += f"{pos}. {balance: <{bal_len+5}} {average: <{bal_len+5}} <<{ctx.author.display_name}>>\n"
+                temp_msg += (
+                    f"{f'{humanize_number(pos)}.': <{pound_len+2}} "
+                    f"{total: <{total_len+5}} "
+                    f"<<{author.display_name}>>\n"
+                )
 
             if pos % 10 == 0:
-                highscores.append(box(temp_msg, lang="md"))
+                if embed_requested:
+                    embed = base_embed.copy()
+                    embed.description = box(temp_msg, lang="md")
+                    embed.set_footer(
+                        text = footer_message.format(
+                            page_num=len(highscores) + 1,
+                            page_len=ceil(len(roulette_list) / 10)
+                        )
+                    )
+                    highscores.append(embed)
+                else:
+                    highscores.append(box(temp_msg, lang="md"))
                 temp_msg = header
-            
             pos += 1
 
         if temp_msg != header:
-            highscores.append(box(temp_msg, lang="md"))
+            if embed_requested:
+                embed = base_embed.copy()
+                embed.description = box(temp_msg, lang="md")
+                embed.set_footer(
+                    text=footer_message.format(
+                        page_num=len(highscores) + 1,
+                        page_len=ceil(len(roulette_list) / 10)
+                    )
+                )
+                highscores.append(embed)
+            else:
+                highscores.append(box(temp_msg, lang="md"))
 
         if highscores:
             await menu(ctx, highscores, DEFAULT_CONTROLS)
+        else:
+            await ctx.send("Nothing found.")
+
+        #await ctx.send(roulette_list)
+
+
 
     @checks.admin_or_permissions(manage_guild=True)
     @check_global_setting_admin()
