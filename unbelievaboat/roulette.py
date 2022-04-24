@@ -417,8 +417,10 @@ class Roulette(MixinMeta):
         pos = 1
         temp_msg = header
 
-        print(roulette_list[0])
         for acc in roulette_list:
+            if acc[1]['roulette_stats']['games'] <= 0:
+                continue
+
             try:
                 name = guild.get_member(acc[0]).display_name
             except AttributeError:
