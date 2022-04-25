@@ -269,7 +269,7 @@ class Roulette(MixinMeta):
         await self.update_leaderboard(players)
         return msg
 
-    async def update_leaderboard(self, players):
+    async def update_leaderboard(self, players, option=None):
         if not players:
             return
 
@@ -277,8 +277,12 @@ class Roulette(MixinMeta):
             conf = await self.configglobalcheckuser(player)
             stats = await conf.roulette_stats()
 
-            stats['games'] += 1
-            stats['total'] += players[player]
+            if option == "reset":
+                stats['games'] = 0
+                stats['total'] = 0
+            else:
+                stats['games'] += 1
+                stats['total'] += players[player]
 
             await conf.roulette_stats.set(stats)        
 
@@ -484,6 +488,30 @@ class Roulette(MixinMeta):
         else:
             await ctx.send("Nothing found.")
 
+    @roulette_disabled_check()
+    @roulette.command(name="reset")
+    async def roulette_reset(self, ctx):
+        guild = ctx.guild
+        if await bank.is_global():
+            raw_accounts = await self.config.all_users()
+            if guild is not None:
+                tmp = raw_accounts.copy()
+                for acc in tmp:
+                    if not guild.get_member(acc):
+                        del raw_accounts[acc]
+        else:
+            raw_accounts = await self.config.all_members(guild)
+
+        # I don't love how this works, but update_leaderboard
+        # takes a dictionary, so I'm assigning all the users
+        # in this dictionary to contain no values so that it
+        # doesn't break parsing. Feel free to update.
+        accounts = {}
+        for account in raw_accounts:
+            accounts[guild.get_member(account)] = None
+
+        await self.update_leaderboard(accounts, option="reset")
+        return await ctx.send("**Roulette Leaderboard Reset!**")
 
     @checks.admin_or_permissions(manage_guild=True)
     @check_global_setting_admin()
