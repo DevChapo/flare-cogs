@@ -190,16 +190,19 @@ class Crypto(commands.Cog):
             return await ctx.send("You do not have any crypto bought.")
         enddata = []
         for coin in data:
-            totalprice = (
-                int(data[coin]["amount"] * (coin_list[coin]["quote"]["USD"]["price"] * 10))
-                - data[coin]["totalcost"]
-            )
-            pricestr = (
-                f"+{humanize_number(totalprice)}"
-                if totalprice > 0
-                else f"{humanize_number(totalprice)}"
-            )
-            enddata.append([coin, data[coin]["amount"], pricestr])
+            try:
+                totalprice = (
+                    int(data[coin]["amount"] * (coin_list[coin]["quote"]["USD"]["price"] * 10))
+                    - data[coin]["totalcost"]
+                )
+                pricestr = (
+                    f"+{humanize_number(totalprice)}"
+                    if totalprice > 0
+                    else f"{humanize_number(totalprice)}"
+                )
+                enddata.append([coin, data[coin]["amount"], pricestr])
+            except:
+                pass
         await ctx.send(
             box(tabulate(enddata, headers=["Coin", "Amount", "Profit/Loss"]), lang="prolog")
         )
