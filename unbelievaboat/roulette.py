@@ -240,8 +240,12 @@ class Roulette(MixinMeta):
                     print("Payouts:")
                     print(payouts)
                     print("---------")
+
+                    # Pay out is initial bet + (bet * multiplier)
                     payout = betinfo["amount"] + (betinfo["amount"] * payouts[bettype])
-                    players[user] += payout
+                    # Only add profit to player leaderboard
+                    players[user] += payout - betinfo["amount"]
+                    
                     if not await self.walletdisabledcheck(ctx):
                         user_conf = await self.configglobalcheckuser(user)
                         wallet = await user_conf.wallet()
