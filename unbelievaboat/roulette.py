@@ -488,9 +488,20 @@ class Roulette(MixinMeta):
         else:
             await ctx.send("Nothing found.")
 
+
+    @checks.admin_or_permissions(manage_guild=True)
+    @check_global_setting_admin()
+    @commands.guild_only()
+    @commands.group()
+    async def rouletteset(self, ctx):
+        """Manage settings for roulette."""
+
     @roulette_disabled_check()
-    @roulette.command(name="reset")
-    async def roulette_reset(self, ctx):
+    @check_global_setting_admin()
+    @commands.guild_only()
+    @rouletteset.command()
+    async def reset(self, ctx):
+        """Resets the roulette leaderboard."""
         guild = ctx.guild
         if await bank.is_global():
             raw_accounts = await self.config.all_users()
@@ -512,13 +523,6 @@ class Roulette(MixinMeta):
 
         await self.update_leaderboard(accounts, option="reset")
         return await ctx.send("**Roulette Leaderboard Reset!**")
-
-    @checks.admin_or_permissions(manage_guild=True)
-    @check_global_setting_admin()
-    @commands.guild_only()
-    @commands.group()
-    async def rouletteset(self, ctx):
-        """Manage settings for roulette."""
 
     @roulette_disabled_check()
     @check_global_setting_admin()
