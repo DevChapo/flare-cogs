@@ -244,6 +244,7 @@ class Roulette(MixinMeta):
                     # Pay out is initial bet + (bet * multiplier)
                     payout = betinfo["amount"] + (betinfo["amount"] * payouts[bettype])
                     payout *= 1.1 if hot_spin else 1
+                    payout = int(payout)
                     # Only add profit to player leaderboard
                     players[user] += payout - betinfo["amount"]
 
