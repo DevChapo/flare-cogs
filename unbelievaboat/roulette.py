@@ -165,7 +165,7 @@ class Roulette(MixinMeta):
                     await ctx.send(length_limited_message)
 
 
-    async def payout(self, ctx, number, game_bets):
+    async def payout(self, ctx, number, game_bets, hot_spin):
         msg = []
         conf = await self.configglobalcheck(ctx)
         payouts = await conf.roulette_payouts()
@@ -221,7 +221,7 @@ class Roulette(MixinMeta):
         for k, v in game_bets.items():
             if type(v) is bool:
                 continue
-            
+
             for item in v:
                 for key, val in item.items():
                     players[ctx.guild.get_member(val['user'])] = 0
@@ -242,10 +242,10 @@ class Roulette(MixinMeta):
                     print("---------")
 
                     # Pay out is initial bet + (bet * multiplier)
-                    payout = betinfo["amount"] + (betinfo["amount"] * payouts[bettype])
+                    payout = betinfo["amount"] + (betinfo["amount"] * payouts[bettype]) + (betinfo["amount"] * 0.1 if hot_spin else 0)
                     # Only add profit to player leaderboard
                     players[user] += payout - betinfo["amount"]
-                    
+
                     if not await self.walletdisabledcheck(ctx):
                         user_conf = await self.configglobalcheckuser(user)
                         wallet = await user_conf.wallet()
@@ -265,7 +265,7 @@ class Roulette(MixinMeta):
                     betinfo = list(bet.values())[0]
                     user = ctx.guild.get_member(betinfo['user'])
                     players[user] -= betinfo['amount']
-                    
+
         await self.update_leaderboard(players)
         return msg
 
@@ -284,7 +284,7 @@ class Roulette(MixinMeta):
                 stats['games'] += 1
                 stats['total'] += players[player]
 
-            await conf.roulette_stats.set(stats)        
+            await conf.roulette_stats.set(stats)
 
     @commands.group(invoke_without_command=True)
     @commands.guild_only()
@@ -326,22 +326,15 @@ class Roulette(MixinMeta):
         msg = await ctx.send(embed=emb)
         await asyncio.sleep(random.randint(3, 8))
         number = random.randint(0, 36)
-        payouts = await self.payout(ctx, number, self.roulettegames[ctx.guild.id])
+        hot_spin = True if random.randint(0, 2) == 0 else False
+        payouts = await self.payout(ctx, number, self.roulettegames[ctx.guild.id], hot_spin)
         emoji = EMOJIS[NUMBERS[number]]
         emb = discord.Embed(
             color=discord.Color.red(),
             title="Roulette Wheel",
-            description="The wheel lands on {} {} {}\n\n**Winnings**\n{}".format(
-                NUMBERS[number],
-                number,
-                emoji,
-                box(
-                    tabulate.tabulate(payouts, headers=["Bet", "Amount Won", "User"]),
-                    lang="prolog",
-                )
-                if payouts
-                else "None.",
-            ),
+            description=f"{'*** HOT SPIN +10% PAYOUTS ***\n' if hot_spin else ''}The wheel lands on {NUMBERS[number]} {number} {emoji}"
+                        f"\n\n**Winnings**\n"
+                        f"{box(tabulate.tabulate(payouts, headers=['Bet', 'Amount Won', 'User']), lang='prolog',) if payouts else 'None.'}",
         )
         await msg.edit(embed=emb)
         del self.roulettegames[ctx.guild.id]
@@ -375,13 +368,13 @@ class Roulette(MixinMeta):
     @roulette.command(name="leaderboard")
     async def roulette_leaderboard(self, ctx, top: int = 10):
         """Print the leaderboard.
-        
+
         Defaults to top 10.
 
         Examples:
          - `[p]roulette leaderboard`
          - `[p]roulette leaderboard 50`
-        
+
         Arguments:
          - `<top>` How many positions on the leaderboard to show.
         """
@@ -411,7 +404,7 @@ class Roulette(MixinMeta):
             [item for item in raw_accounts.items() if item[1]["roulette_stats"]["total"] != 0],
             key=lambda x: x[1]["roulette_stats"]["total"], reverse=True
         )[:top]
-        
+
         try:
             total_len = len(str(roulette_list[0][1]["roulette_stats"]["total"]))
         except IndexError:
@@ -440,7 +433,7 @@ class Roulette(MixinMeta):
 
             total = acc[1]["roulette_stats"]["total"]
             total = humanize_number(total)
-            
+
             if acc[0] != author.id:
                 temp_msg += (
                     f"{f'{humanize_number(pos)}.': <{pound_len+2}} "
