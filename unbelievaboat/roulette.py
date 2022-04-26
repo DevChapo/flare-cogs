@@ -332,7 +332,7 @@ class Roulette(MixinMeta):
         emb = discord.Embed(
             color=discord.Color.red(),
             title="Roulette Wheel",
-            description=f"{'*** HOT SPIN +10% PAYOUTS ***\n' if hot_spin else ''}The wheel lands on {NUMBERS[number]} {number} {emoji}"
+            description=f"{f'*** HOT SPIN +10% PAYOUTS ***{chr(10)}' if hot_spin else ''}The wheel lands on {NUMBERS[number]} {number} {emoji}"
                         f"\n\n**Winnings**\n"
                         f"{box(tabulate.tabulate(payouts, headers=['Bet', 'Amount Won', 'User']), lang='prolog',) if payouts else 'None.'}",
         )
