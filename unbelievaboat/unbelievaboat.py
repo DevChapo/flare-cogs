@@ -58,15 +58,15 @@ class Unbelievaboat(Wallet, Roulette, SettingsMixin, commands.Cog, metaclass=Com
             "roulette_toggle": True,
             "roulette_time": 45,
             "roulette_payouts": {
-                "zero": 36,
-                "number": 17,
+                "zero": 35,
+                "number": 35,
                 "color": 1,
                 "dozen": 2,
                 "odd_or_even": 1,
                 "halfs": 1,
                 "column": 2,
             },
-            
+
             "betting": {"max": 10000, "min": 100},
             "wallet_max": 50000,
         }
