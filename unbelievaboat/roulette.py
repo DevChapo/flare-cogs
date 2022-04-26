@@ -326,7 +326,7 @@ class Roulette(MixinMeta):
         msg = await ctx.send(embed=emb)
         await asyncio.sleep(random.randint(3, 8))
         number = random.randint(0, 36)
-        hot_spin = True if random.randint(0, 2) == 0 else False
+        hot_spin = True if random.randint(0, 9) == 0 else False
         payouts = await self.payout(ctx, number, self.roulettegames[ctx.guild.id], hot_spin)
         emoji = EMOJIS[NUMBERS[number]]
         emb = discord.Embed(
