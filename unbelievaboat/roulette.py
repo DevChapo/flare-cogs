@@ -165,10 +165,11 @@ class Roulette(MixinMeta):
                     await ctx.send(length_limited_message)
 
 
-    async def payout(self, ctx, number, game_bets, hot_spin):
+    async def payout(self, ctx, number, game_bets, hot_spin, rr=False):
         msg = []
         conf = await self.configglobalcheck(ctx)
         payouts = await conf.roulette_payouts()
+        rickroll = await conf.roulette_rickroll()
         color = NUMBERS[number]
 
         # Determine odd/even; exclude 0
@@ -229,9 +230,23 @@ class Roulette(MixinMeta):
         for bettype, value in payout_types.items():
             for bet in game_bets[bettype]:
                 bet_type = list(bet.keys())[0]
+                betinfo = list(bet.values())[0]
+                user = ctx.guild.get_member(betinfo["user"])
+
+                # Rick roll if enabled
+                if rickroll['toggle']:
+                    if rickroll['games_remain'] == 0:
+                        rickroll['games_remain'] = rickroll['games_default']
+                        await ctx.send("https://c.tenor.com/VFFJ8Ei3C2IAAAAM/rickroll-rick.gif")
+                        payout = betinfo["amount"]
+                        await self.walletdeposit(ctx, user, payout)
+                    else:
+                        rickroll['games_remain'] -= 1
+                        
+                    return await conf.roulette_rickroll.set(rickroll)
+
+                # Real roulette
                 if bet_type == value:
-                    betinfo = list(bet.values())[0]
-                    user = ctx.guild.get_member(betinfo["user"])
                     print("---------")
                     print("BetInfo:")
                     print(betinfo)
@@ -264,7 +279,6 @@ class Roulette(MixinMeta):
                             await bank.set_balance(user, e.max_bal)
                     msg.append([bet_type, humanize_number(payout), user.display_name])
                 else:
-                    betinfo = list(bet.values())[0]
                     user = ctx.guild.get_member(betinfo['user'])
                     players[user] -= betinfo['amount']
 
@@ -328,17 +342,32 @@ class Roulette(MixinMeta):
         msg = await ctx.send(embed=emb)
         await asyncio.sleep(random.randint(3, 8))
         number = random.randint(0, 36)
+
+        # Determining hot spin bonus
         hot_spin = True if random.randint(0, 4) == 0 else False
-        payouts = await self.payout(ctx, number, self.roulettegames[ctx.guild.id], hot_spin)
-        emoji = EMOJIS[NUMBERS[number]]
-        emb = discord.Embed(
-            color=discord.Color.red(),
-            title="Roulette Wheel",
-            description=f"The wheel lands on {NUMBERS[number]} {number} {emoji}"
-                        f"\n\n**Winnings**\n"
-                        f"{f'*** HOT SPIN +10% PAYOUTS ***{chr(10)}' if hot_spin else ''}"
-                        f"{box(tabulate.tabulate(payouts, headers=['Bet', 'Amount Won', 'User']), lang='prolog',) if payouts else 'None.'}",
-        )
+        
+        # Rick roll meme
+        conf = await self.configglobalcheck(ctx)
+        rickroll = await conf.roulette_rickroll()
+        rr = True if rickroll['toggle'] and rickroll['games_remain'] == 0 else False
+        payouts = await self.payout(ctx, number, self.roulettegames[ctx.guild.id], hot_spin, rr)
+
+        if rr:
+            emb = discord.Embed(
+                color=discord.Color.red(),
+                title="Rickrolled!",
+                description="Nobody wins."
+            )
+        else:
+            emoji = EMOJIS[NUMBERS[number]]
+            emb = discord.Embed(
+                color=discord.Color.red(),
+                title="Roulette Wheel",
+                description=f"The wheel lands on {NUMBERS[number]} {number} {emoji}"
+                            f"\n\n**Winnings**\n"
+                            f"{f'*** HOT SPIN +10% PAYOUTS ***{chr(10)}' if hot_spin else ''}"
+                            f"{box(tabulate.tabulate(payouts, headers=['Bet', 'Amount Won', 'User']), lang='prolog',) if payouts else 'None.'}",
+            )
         await msg.edit(embed=emb)
         del self.roulettegames[ctx.guild.id]
 
@@ -361,6 +390,7 @@ class Roulette(MixinMeta):
             return await ctx.send("There is already a roulette game on.")
         conf = await self.configglobalcheck(ctx)
         time = await conf.roulette_time()
+        
         await ctx.send(
             "The roulette wheel will be spun in {} seconds.".format(time), delete_after=time
         )
@@ -519,6 +549,32 @@ class Roulette(MixinMeta):
 
         await self.update_leaderboard(accounts, option="reset")
         return await ctx.send("**Roulette Leaderboard Reset!**")
+
+    @roulette_disabled_check()
+    @check_global_setting_admin()
+    @commands.guild_only()
+    @rouletteset.command()
+    async def rickroll(self, ctx, *, option: int=None):
+        """Rickrolling settings: toggle or input game quantity."""
+        conf = await self.configglobalcheck(ctx)
+        rickroll = await conf.roulette_rickroll()
+
+        # Toggling on/off
+        if not option:
+            if rickroll["toggle"]:
+                rickroll["toggle"] = False    
+                await ctx.send("Roulette Rickrolling disabled.")
+            else:
+                rickroll["toggle"] = True
+                await ctx.send("Roulette Rickrolling enabled.")
+            
+        # Toggling quantity of games
+        else:
+            rickroll["games_default"] = option
+            rickroll["games_remain"] = option
+            await ctx.send(f"Roulette Rickrolling set to {option} games.")
+
+        await conf.roulette_rickroll.set(rickroll)
 
     @roulette_disabled_check()
     @check_global_setting_admin()

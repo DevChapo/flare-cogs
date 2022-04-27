@@ -55,6 +55,11 @@ class Unbelievaboat(Wallet, Roulette, SettingsMixin, commands.Cog, metaclass=Com
             "fines": {"max": 250, "min": 10},
             "interest": 5,
             "disable_wallet": False,
+            "roulette_rickroll" : {
+                "toggle" : False,
+                "games_default" : 100,
+                "games_remain"  : 100
+            },
             "roulette_toggle": True,
             "roulette_time": 45,
             "roulette_payouts": {
