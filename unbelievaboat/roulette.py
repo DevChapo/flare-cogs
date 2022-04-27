@@ -247,7 +247,7 @@ class Roulette(MixinMeta):
 
                     # Pay out is initial bet + (bet * multiplier)
                     payout = betinfo["amount"] + (betinfo["amount"] * payouts[bettype])
-                    payout *= 1.1 if hot_spin else 1
+                    payout *= 1+hot_spin if hot_spin > 0 else 1
                     payout = int(payout)
                     # Only add profit to player leaderboard
                     players[user] += payout - betinfo["amount"]
@@ -333,7 +333,13 @@ class Roulette(MixinMeta):
         number = random.randint(0, 36)
 
         # Determining hot spin bonus
-        hot_spin = True if random.randint(0, 4) == 0 else False
+        hot_spin = 0
+        hot_spin += .1 if random.randint(0, 4) == 0 else 0
+        hot_spin += .15 if random.randint(0, 9) == 0 else 0
+        hot_spin += .20 if random.randint(0, 19) == 0 else 0
+
+        if hot_spin > 0:
+            hot_spin_int = int((hot_spin + .001) * 100)
         
         # Rick roll meme
         conf = await self.configglobalcheck(ctx)
@@ -360,7 +366,7 @@ class Roulette(MixinMeta):
                 title="Roulette Wheel",
                 description=f"The wheel lands on {NUMBERS[number]} {number} {emoji}"
                             f"\n\n**Winnings**\n"
-                            f"{f'*** HOT SPIN +10% PAYOUTS ***{chr(10)}' if hot_spin else ''}"
+                            f"{f'*** HOT SPIN +{hot_spin_int}% PAYOUTS ***{chr(10)}' if hot_spin > 0 else ''}"
                             f"{box(tabulate.tabulate(payouts, headers=['Bet', 'Amount Won', 'User']), lang='prolog',) if payouts else 'None.'}",
             )
         await msg.edit(embed=emb)
