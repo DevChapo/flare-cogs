@@ -236,14 +236,18 @@ class Roulette(MixinMeta):
                 # Rick roll if enabled
                 if rickroll['toggle']:
                     if rickroll['games_remain'] == 0:
-                        rickroll['games_remain'] = rickroll['games_default']
-                        await ctx.send("https://c.tenor.com/VFFJ8Ei3C2IAAAAM/rickroll-rick.gif")
                         payout = betinfo["amount"]
                         await self.walletdeposit(ctx, user, payout)
+                        continue
+                        
+                if rickroll['toggle']:
+                    if rickroll['games_remain'] == 0:
+                        rickroll['games_remain'] = rickroll['games_default']
+                        await ctx.send("https://c.tenor.com/VFFJ8Ei3C2IAAAAM/rickroll-rick.gif")
+                        return await conf.roulette_rickroll.set(rickroll)
                     else:
                         rickroll['games_remain'] -= 1
-                        
-                    return await conf.roulette_rickroll.set(rickroll)
+                        await conf.roulette_rickroll.set(rickroll)
 
                 # Real roulette
                 if bet_type == value:
