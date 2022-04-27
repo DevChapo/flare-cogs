@@ -329,14 +329,14 @@ class Roulette(MixinMeta):
             description="The wheel begins to spin.",
         )
         msg = await ctx.send(embed=emb)
-        await asyncio.sleep(random.randint(3, 8))
+        await asyncio.sleep(random.randint(1, 5))
         number = random.randint(0, 36)
 
         # Determining hot spin bonus
         hot_spin = 0
         hot_spin += .1 if random.randint(0, 4) == 0 else 0
-        hot_spin += .15 if random.randint(0, 9) == 0 else 0
-        hot_spin += .20 if random.randint(0, 19) == 0 else 0
+        hot_spin += .17 if random.randint(0, 9) == 0 else 0
+        hot_spin += .25 if random.randint(0, 19) == 0 else 0
 
         if hot_spin > 0:
             hot_spin_int = int((hot_spin + .001) * 100)
