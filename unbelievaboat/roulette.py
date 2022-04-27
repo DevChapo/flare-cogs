@@ -165,11 +165,10 @@ class Roulette(MixinMeta):
                     await ctx.send(length_limited_message)
 
 
-    async def payout(self, ctx, number, game_bets, hot_spin, rr=False):
+    async def payout(self, ctx, number, game_bets, hot_spin):
         msg = []
         conf = await self.configglobalcheck(ctx)
         payouts = await conf.roulette_payouts()
-        rickroll = await conf.roulette_rickroll()
         color = NUMBERS[number]
 
         # Determine odd/even; exclude 0
@@ -226,28 +225,14 @@ class Roulette(MixinMeta):
             for item in v:
                 for key, val in item.items():
                     players[ctx.guild.get_member(val['user'])] = 0
-
+ 
+        # For every payout type...
         for bettype, value in payout_types.items():
+            # For each bet of a payout type...
             for bet in game_bets[bettype]:
                 bet_type = list(bet.keys())[0]
                 betinfo = list(bet.values())[0]
                 user = ctx.guild.get_member(betinfo["user"])
-
-                # Rick roll if enabled
-                if rickroll['toggle']:
-                    if rickroll['games_remain'] == 0:
-                        payout = betinfo["amount"]
-                        await self.walletdeposit(ctx, user, payout)
-                        continue
-                        
-                if rickroll['toggle']:
-                    if rickroll['games_remain'] == 0:
-                        rickroll['games_remain'] = rickroll['games_default']
-                        await ctx.send("https://c.tenor.com/VFFJ8Ei3C2IAAAAM/rickroll-rick.gif")
-                        return await conf.roulette_rickroll.set(rickroll)
-                    else:
-                        rickroll['games_remain'] -= 1
-                        await conf.roulette_rickroll.set(rickroll)
 
                 # Real roulette
                 if bet_type == value:
@@ -353,16 +338,22 @@ class Roulette(MixinMeta):
         # Rick roll meme
         conf = await self.configglobalcheck(ctx)
         rickroll = await conf.roulette_rickroll()
-        rr = True if rickroll['toggle'] and rickroll['games_remain'] == 0 else False
-        payouts = await self.payout(ctx, number, self.roulettegames[ctx.guild.id], hot_spin, rr)
+        rr = True if rickroll['toggle'] else False
+        payouts = await self.payout(ctx, number, self.roulettegames[ctx.guild.id], hot_spin)
 
-        if rr:
+        if rr and rickroll['games_remain'] == 0:
+            rickroll['games_remain'] = rickroll['games_default']
             emb = discord.Embed(
                 color=discord.Color.red(),
                 title="Rickrolled!",
                 description="Nobody wins."
             )
+            await ctx.send("https://c.tenor.com/VFFJ8Ei3C2IAAAAM/rickroll-rick.gif")
+            await conf.roulette_rickroll.set(rickroll)
         else:
+            if rr:
+                rickroll['games_remain'] -= 1
+                await conf.roulette_rickroll.set(rickroll)
             emoji = EMOJIS[NUMBERS[number]]
             emb = discord.Embed(
                 color=discord.Color.red(),
