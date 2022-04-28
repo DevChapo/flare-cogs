@@ -363,7 +363,7 @@ class Roulette(MixinMeta):
                 title="Roulette Wheel",
                 description=f"The wheel lands on {NUMBERS[number]} {number} {emoji}"
                             f"\n\n**Winnings**\n"
-                            f"{f'*** HOT SPIN +{int(round(hot_spin * 100))}% PAYOUTS ***{chr(10)}' if hot_spin > 0 else ''}"
+                            f"{f'*** HOT SPIN +{int(round(hot_spin * 100)):.0f}% PAYOUTS ***{chr(10)}' if hot_spin > 0 else ''}"
                             f"{box(tabulate.tabulate(payouts, headers=['Bet', 'Amount Won', 'User']), lang='prolog',) if payouts else 'None.'}",
             )
         await msg.edit(embed=emb)
