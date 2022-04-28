@@ -337,6 +337,7 @@ class Roulette(MixinMeta):
         hot_spin += .05 if random.randint(0, 4) == 0 else 0
         hot_spin += .10 if random.randint(0, 9) == 0 else 0
         hot_spin += .20 if random.randint(0, 19) == 0 else 0
+        hot_spin += 2 if random.randint(0, 99) == 0 else 0
 
         # Rick roll meme
         conf = await self.configglobalcheck(ctx)
