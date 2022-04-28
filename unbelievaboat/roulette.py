@@ -225,7 +225,7 @@ class Roulette(MixinMeta):
             for item in v:
                 for key, val in item.items():
                     players[ctx.guild.get_member(val['user'])] = 0
- 
+
         # For every payout type...
         for bettype, value in payout_types.items():
             # For each bet of a payout type...
@@ -334,13 +334,10 @@ class Roulette(MixinMeta):
 
         # Determining hot spin bonus
         hot_spin = 0
-        hot_spin += .1 if random.randint(0, 4) == 0 else 0
-        hot_spin += .17 if random.randint(0, 9) == 0 else 0
-        hot_spin += .25 if random.randint(0, 19) == 0 else 0
+        hot_spin += .05 if random.randint(0, 4) == 0 else 0
+        hot_spin += .10 if random.randint(0, 9) == 0 else 0
+        hot_spin += .20 if random.randint(0, 19) == 0 else 0
 
-        if hot_spin > 0:
-            hot_spin_int = int((hot_spin + .001) * 100)
-        
         # Rick roll meme
         conf = await self.configglobalcheck(ctx)
         rickroll = await conf.roulette_rickroll()
@@ -366,7 +363,7 @@ class Roulette(MixinMeta):
                 title="Roulette Wheel",
                 description=f"The wheel lands on {NUMBERS[number]} {number} {emoji}"
                             f"\n\n**Winnings**\n"
-                            f"{f'*** HOT SPIN +{hot_spin_int}% PAYOUTS ***{chr(10)}' if hot_spin > 0 else ''}"
+                            f"{f'*** HOT SPIN +{int(round(hot_spin) * 100)}% PAYOUTS ***{chr(10)}' if hot_spin > 0 else ''}"
                             f"{box(tabulate.tabulate(payouts, headers=['Bet', 'Amount Won', 'User']), lang='prolog',) if payouts else 'None.'}",
             )
         await msg.edit(embed=emb)
@@ -391,7 +388,7 @@ class Roulette(MixinMeta):
             return await ctx.send("There is already a roulette game on.")
         conf = await self.configglobalcheck(ctx)
         time = await conf.roulette_time()
-        
+
         await ctx.send(
             "The roulette wheel will be spun in {} seconds.".format(time), delete_after=time
         )
@@ -563,12 +560,12 @@ class Roulette(MixinMeta):
         # Toggling on/off
         if not option:
             if rickroll["toggle"]:
-                rickroll["toggle"] = False    
+                rickroll["toggle"] = False
                 await ctx.send("Roulette Rickrolling disabled.")
             else:
                 rickroll["toggle"] = True
                 await ctx.send("Roulette Rickrolling enabled.")
-            
+
         # Toggling quantity of games
         else:
             rickroll["games_default"] = option
