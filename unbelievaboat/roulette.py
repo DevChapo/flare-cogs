@@ -142,16 +142,16 @@ class Roulette(MixinMeta):
                     bet = int(b)
                 except ValueError:
                     failure['invalid'].append(f"{ctx.author.display_name}, invalid bet ({b}).")
-            if isinstance(bet, int) or bet:
-                bet_placed = await self.single_bet(ctx, amount, bet)
-                if bet_placed:
-                    success.append(bet)
-                elif 'funds' in bet_placed:
-                    failure['funds'].append(bet)
-                elif 'duplicate' in bet_placed:
-                    failure['duplicate'].append(bet)
-                else:
-                    failure['invalid'].append(bet)
+                    continue
+            bet_placed = await self.single_bet(ctx, amount, bet)
+            if bet_placed:
+                success.append(bet)
+            elif 'funds' in bet_placed:
+                failure['funds'].append(b)
+            elif 'duplicate' in bet_placed:
+                failure['duplicate'].append(b)
+            else:
+                failure['invalid'].append(b)
 
         if len(success):
             await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))} for a total of {humanize_number(len(success) * amount)} {await bank.get_currency_name(ctx.guild)}.")
