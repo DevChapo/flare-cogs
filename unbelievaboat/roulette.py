@@ -131,8 +131,8 @@ class Roulette(MixinMeta):
             'funds': [],
             'duplicate': [],
         }
-
-        bet_pattern = r'(red|even|odd|1st half|2nd half|(1st|2nd|3rd) (dozen|column)|\d+-\d+|\d+)'
+        # =rbet 100 red, black, odd, even, 1-12, 1st half, 2nd half, 1st column, 2nd column, 3rd column, 1st dozen, 2nd dozen, 3rd dozen
+        bet_pattern = r'(red|black|even|odd|(?:1st|2nd) half|(?:1st|2nd|3rd) (?:dozen|column)|\d+-\d+|\d+)'
         bets = re.findall(bet_pattern, bet)
         for b in bets:
             if str(b).lower() in BET_TYPES:
@@ -158,7 +158,7 @@ class Roulette(MixinMeta):
         if len(failure['funds']):
             await ctx.send(f"{ctx.author.display_name}, you do not have enough funds to complete this bet ({', '.join(map(str, failure['funds']))}).")
         if len(failure['duplicate']):
-            await ctx.send(f"{ctx.author.display_name}, you do not have enough funds to complete this bet ({', '.join(map(str, failure['duplicate']))}).")
+            await ctx.send(f"{ctx.author.display_name}, you cannot make a duplicate bet on ({', '.join(map(str, failure['duplicate']))}).")
         if len(failure['invalid']):
             await ctx.send(f"{ctx.author.display_name}, invalid bets ({', '.join(map(str, failure['invalid']))}).")
 
