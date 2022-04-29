@@ -95,7 +95,7 @@ class Roulette(MixinMeta):
         bet_key = 'number'
         if str(selection).lower() in BET_TYPES:
             bet_key = BET_TYPES[selection.lower()]
-        elif selection == '0':
+        elif selection == 0:
             bet_key = 'zero'
 
         try:
@@ -126,43 +126,41 @@ class Roulette(MixinMeta):
         =rbet 100 even
         """
         success = []
-        failure = []
+        failure = {
+            'invalid': [],
+            'funds': [],
+            'duplicate': [],
+        }
 
-        bets = bet.split(',')
+        bet_pattern = r'(red|even|odd|1st half|2nd half|(1st|2nd|3rd) (dozen|column)|\d+-\d+|\d+)'
+        bets = re.findall(bet_pattern, bet)
         for b in bets:
-            parsed_bet = ""
-            trimmed_bet = b.strip()
-            if len(trimmed_bet):
-                if str(trimmed_bet).lower() in BET_TYPES:
-                    parsed_bet = trimmed_bet.lower()
+            if str(b).lower() in BET_TYPES:
+                bet = str(b).lower()
+            else:
+                try:
+                    bet = int(b)
+                except ValueError:
+                    failure['invalid'].append(f"{ctx.author.display_name}, invalid bet ({b}).")
+            if isinstance(bet, int) or bet:
+                bet_placed = await self.single_bet(ctx, amount, bet)
+                if bet_placed:
+                    success.append(bet)
+                elif 'funds' in bet_placed:
+                    failure['funds'].append(bet)
+                elif 'duplicate' in bet_placed:
+                    failure['duplicate'].append(bet)
                 else:
-                    try:
-                        parsed_bet = int(trimmed_bet)
-                    except ValueError:
-                        failure.append(f"{ctx.author.display_name}, invalid bet ({trimmed_bet}).")
-                if isinstance(parsed_bet, int) or parsed_bet:
-                    bet_placed = await self.single_bet(ctx, amount, parsed_bet)
-                    if bet_placed is True:
-                        success.append(parsed_bet)
-                    else:
-                        failure.append(bet_placed)
+                    failure['invalid'].append(bet)
 
         if len(success):
             await ctx.send(f"{ctx.author.display_name} placed a {humanize_number(amount)} {await bank.get_currency_name(ctx.guild)} bet on {', '.join(map(str, success))} for a total of {humanize_number(len(success) * amount)} {await bank.get_currency_name(ctx.guild)}.")
-        if len(failure):
-            length_limited_message = ""
-            failure_count = len(failure)
-            for i, fail in enumerate(failure):
-                if (len(length_limited_message) + len(fail) < 1900):
-                    length_limited_message = length_limited_message + '\n' + fail
-                else:
-                    # Messages overflows, send it and reset the length_limited_message
-                    await ctx.send(length_limited_message)
-                    length_limited_message = fail
-
-                # Last element in array, make sure the message is sent
-                if (failure_count-1 == i and len(length_limited_message)):
-                    await ctx.send(length_limited_message)
+        if len(failure['funds']):
+            await ctx.send(f"{ctx.author.display_name}, you do not have enough funds to complete this bet ({', '.join(map(str, failure['funds']))}).")
+        if len(failure['duplicate']):
+            await ctx.send(f"{ctx.author.display_name}, you do not have enough funds to complete this bet ({', '.join(map(str, failure['duplicate']))}).")
+        if len(failure['invalid']):
+            await ctx.send(f"{ctx.author.display_name}, invalid bets ({', '.join(map(str, failure['invalid']))}).")
 
 
     async def payout(self, ctx, number, game_bets, hot_spin):
@@ -342,10 +340,9 @@ class Roulette(MixinMeta):
         # Rick roll meme
         conf = await self.configglobalcheck(ctx)
         rickroll = await conf.roulette_rickroll()
-        rr = True if rickroll['toggle'] else False
         payouts = await self.payout(ctx, number, self.roulettegames[ctx.guild.id], hot_spin)
 
-        if rr and rickroll['games_remain'] == 0:
+        if rickroll['toggle'] and rickroll['games_remain'] == 0:
             rickroll['games_remain'] = rickroll['games_default']
             emb = discord.Embed(
                 color=discord.Color.red(),
@@ -355,7 +352,7 @@ class Roulette(MixinMeta):
             await ctx.send("https://c.tenor.com/VFFJ8Ei3C2IAAAAM/rickroll-rick.gif")
             await conf.roulette_rickroll.set(rickroll)
         else:
-            if rr:
+            if rickroll['toggle']:
                 rickroll['games_remain'] -= 1
                 await conf.roulette_rickroll.set(rickroll)
             emoji = EMOJIS[NUMBERS[number]]
