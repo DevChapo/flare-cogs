@@ -368,6 +368,62 @@ class Roulette(MixinMeta):
         del self.roulettegames[ctx.guild.id]
 
     @roulette_disabled_check()
+    @roulette.command(name="mock")
+    async def roulette_mock(self, ctx, number):
+        """Mock a game of roulette."""
+        if ctx.guild.id not in self.roulettegames:
+            self.roulettegames[ctx.guild.id] = {
+                "zero": [],
+                "color": [],
+                "number": [],
+                "dozen": [],
+                "odd_or_even": [],
+                "halfs": [],
+                "column": [],
+                "started": False,
+            }
+        else:
+            return await ctx.send("There is already a roulette game on.")
+        conf = await self.configglobalcheck(ctx)
+        time = await conf.roulette_time()
+
+        await ctx.send(
+            "The roulette wheel will be spun in {} seconds.".format(time), delete_after=time
+        )
+        # set 5 to time
+        asyncio.create_task(self.roulette_spin(ctx, time))
+
+        self.roulettegames[ctx.guild.id]["started"] = True
+        emb = discord.Embed(
+            color=discord.Color.red(),
+            title="Roulette Wheel",
+            description="The wheel begins to spin.",
+        )
+        msg = await ctx.send(embed=emb)
+
+        # Determining hot spin bonus
+        hot_spin = 0
+        hot_spin += .05 if random.randint(0, 4) == 0 else 0
+        hot_spin += .10 if random.randint(0, 9) == 0 else 0
+        hot_spin += .20 if random.randint(0, 19) == 0 else 0
+        hot_spin += 1 if random.randint(0, 99) == 0 else 0
+
+        # Rick roll meme
+        conf = await self.configglobalcheck(ctx)
+        payouts = await self.payout(ctx, number, self.roulettegames[ctx.guild.id], hot_spin)
+        emoji = EMOJIS[NUMBERS[number]]
+        emb = discord.Embed(
+            color=discord.Color.red(),
+            title="Roulette Wheel",
+            description=f"The wheel lands on {NUMBERS[number]} {number} {emoji}"
+                        f"\n\n**Winnings**\n"
+                        f"{f'*** HOT SPIN +{int(round(hot_spin * 100)):.0f}% PAYOUTS ***{chr(10)}' if hot_spin > 0 else ''}"
+                        f"{box(tabulate.tabulate(payouts, headers=['Bet', 'Amount Won', 'User']), lang='prolog',) if payouts else 'None.'}",
+        )
+        await msg.edit(embed=emb)
+        del self.roulettegames[ctx.guild.id]
+
+    @roulette_disabled_check()
     @roulette.command(name="start")
     async def roulette_start(self, ctx):
         """Start a game of roulette."""
