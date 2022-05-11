@@ -41,7 +41,7 @@ class Wallet(MixinMeta):
     async def walletwithdraw(self, user, amount):
         conf = await self.configglobalcheckuser(user)
         wallet = await conf.wallet()
-        if amount < wallet:
+        if amount <= wallet:
             await conf.wallet.set(wallet - amount)
         else:
             raise ValueError
