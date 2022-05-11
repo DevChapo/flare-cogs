@@ -293,7 +293,7 @@ class Roulette(MixinMeta):
 
     @commands.group(invoke_without_command=True)
     @commands.guild_only()
-    @commands.cooldown(1, 2, commands.BucketType.user)
+    @commands.cooldown(1, 4, commands.BucketType.user)
     @roulette_disabled_check()
     async def roulette(self, ctx, amount: int, *, bet):
         """Bet on the roulette wheel.
