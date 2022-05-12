@@ -79,6 +79,9 @@ class Crypto(commands.Cog):
         if amount <= 0:
             await ctx.send("You cannot buy less than 0 coin.")
             return
+
+        await ctx.send(f'Your order to purchase {humanize_number(amount)} of {coin} will execute in {self.CRYPTO_DELAY_MINUTES} minutes!')
+        await asyncio.sleep(60 * self.CRYPTO_DELAY_MINUTES)
         coin_data = await self.checkcoins(coin)
         if "status" in coin_data:
             status = coin_data["status"]
@@ -103,9 +106,6 @@ class Crypto(commands.Cog):
             await ctx.send("{} is not in my list of currencies!".format(coin))
             return None
 
-        await ctx.send(f'Your order to purchase {humanize_number(amount)} of {coin_data["name"]} will execute in {self.CRYPTO_DELAY_MINUTES} minutes!')
-        await asyncio.sleep(60 * self.CRYPTO_DELAY_MINUTES)
-        coin_data = await self.checkcoins(coin)
         price = (
             int(float(coin_data["quote"]["USD"]["price"]) * amount)
             if float(coin_data["quote"]["USD"]["price"]) < 1
@@ -139,8 +139,10 @@ class Crypto(commands.Cog):
 
         Exchange rate 1$ = 10 credits."""
         if amount <= 0:
-            await ctx.send("You cannot buy less than 0 coin.")
+            await ctx.send("You cannot sell less than 0 coin.")
             return
+        await ctx.send(f'Your order to sell {humanize_number(amount)} of {coin} will execute in {self.CRYPTO_DELAY_MINUTES} minutes!')
+        await asyncio.sleep(60 * self.CRYPTO_DELAY_MINUTES)
         coin_data = await self.checkcoins(coin)
         if "status" in coin_data:
             status = coin_data["status"]
@@ -165,9 +167,6 @@ class Crypto(commands.Cog):
             await ctx.send("{} is not in my list of currencies!".format(coin))
             return None
 
-        await ctx.send(f'Your order to sell {humanize_number(amount)} of {coin_data["name"]} will execute in {self.CRYPTO_DELAY_MINUTES} minutes!')
-        await asyncio.sleep(60 * self.CRYPTO_DELAY_MINUTES)
-        coin_data = await self.checkcoins(coin)
         async with self.config.user(ctx.author).crypto() as coins:
             if coin_data["name"] not in coins:
                 return await ctx.send(f'You do not have any of {coin_data["name"]}.')
