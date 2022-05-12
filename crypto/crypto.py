@@ -1,5 +1,6 @@
 from typing import Dict, Optional
 
+import asyncio
 import aiohttp
 from redbot.core import Config, bank, commands
 from redbot.core.utils.chat_formatting import box, humanize_number
@@ -19,6 +20,7 @@ class Crypto(commands.Cog):
 
     __version__ = "0.0.1"
     __author__ = "flare, Flame and TrustyJAID."
+    CRYPTO_DELAY_MINUTES = 2
 
     def format_help_for_context(self, ctx):
         pre_processed = super().format_help_for_context(ctx)
@@ -116,6 +118,10 @@ class Crypto(commands.Cog):
                 f'You cannot afford {humanize_number(amount)} of {coin_data["name"]}.\nIt would have cost {humanize_number(inflate_price)} {currency} ({price} {currency}) however you only have {bal} {currency}!.'
             )
             return
+
+        await ctx.send(f'Your order to purchase {humanize_number(amount)} of {coin_data["name"]} will execute in {self.CRYPTO_DELAY_MINUTES} minutes!')
+        await asyncio.sleep(60 * self.CRYPTO_DELAY_MINUTES)
+
         async with self.config.user(ctx.author).crypto() as coins:
             if coin_data["name"] in coins:
                 coins[coin_data["name"]]["amount"] += amount
@@ -169,9 +175,11 @@ class Crypto(commands.Cog):
             coins[coin_data["name"]]["totalcost"] -= int(amount * (coin_data["quote"]["USD"]["price"] * 10))
             if coins[coin_data["name"]]["amount"] == 0:
                 del coins[coin_data["name"]]
-        bal = await bank.deposit_credits(
-            ctx.author, int(amount * (float(coin_data["quote"]["USD"]["price"]) * 10))
-        )
+
+        await ctx.send(f'Your order to sell {humanize_number(amount)} of {coin_data["name"]} will execute in {self.CRYPTO_DELAY_MINUTES} minutes!')
+        await asyncio.sleep(60 * self.CRYPTO_DELAY_MINUTES)
+
+        bal = await bank.deposit_credits(ctx.author, int(amount * (float(coin_data["quote"]["USD"]["price"]) * 10)))
         currency = await bank.get_currency_name(ctx.guild)
         await ctx.send(
             f'You sold {humanize_number(amount)} of {coin_data["name"]} for {humanize_number(int(amount * (float(coin_data["quote"]["USD"]["price"]) * 10)))} {currency} '
