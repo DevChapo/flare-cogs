@@ -102,6 +102,10 @@ class Crypto(commands.Cog):
         if coin_data == {}:
             await ctx.send("{} is not in my list of currencies!".format(coin))
             return None
+
+        await ctx.send(f'Your order to purchase {humanize_number(amount)} of {coin_data["name"]} will execute in {self.CRYPTO_DELAY_MINUTES} minutes!')
+        await asyncio.sleep(60 * self.CRYPTO_DELAY_MINUTES)
+        coin_data = await self.checkcoins(coin)
         price = (
             int(float(coin_data["quote"]["USD"]["price"]) * amount)
             if float(coin_data["quote"]["USD"]["price"]) < 1
@@ -118,9 +122,6 @@ class Crypto(commands.Cog):
                 f'You cannot afford {humanize_number(amount)} of {coin_data["name"]}.\nIt would have cost {humanize_number(inflate_price)} {currency} ({price} {currency}) however you only have {bal} {currency}!.'
             )
             return
-
-        await ctx.send(f'Your order to purchase {humanize_number(amount)} of {coin_data["name"]} will execute in {self.CRYPTO_DELAY_MINUTES} minutes!')
-        await asyncio.sleep(60 * self.CRYPTO_DELAY_MINUTES)
 
         async with self.config.user(ctx.author).crypto() as coins:
             if coin_data["name"] in coins:
@@ -163,6 +164,10 @@ class Crypto(commands.Cog):
         if coin_data == {}:
             await ctx.send("{} is not in my list of currencies!".format(coin))
             return None
+
+        await ctx.send(f'Your order to sell {humanize_number(amount)} of {coin_data["name"]} will execute in {self.CRYPTO_DELAY_MINUTES} minutes!')
+        await asyncio.sleep(60 * self.CRYPTO_DELAY_MINUTES)
+        coin_data = await self.checkcoins(coin)
         async with self.config.user(ctx.author).crypto() as coins:
             if coin_data["name"] not in coins:
                 return await ctx.send(f'You do not have any of {coin_data["name"]}.')
@@ -175,9 +180,6 @@ class Crypto(commands.Cog):
             coins[coin_data["name"]]["totalcost"] -= int(amount * (coin_data["quote"]["USD"]["price"] * 10))
             if coins[coin_data["name"]]["amount"] == 0:
                 del coins[coin_data["name"]]
-
-        await ctx.send(f'Your order to sell {humanize_number(amount)} of {coin_data["name"]} will execute in {self.CRYPTO_DELAY_MINUTES} minutes!')
-        await asyncio.sleep(60 * self.CRYPTO_DELAY_MINUTES)
 
         bal = await bank.deposit_credits(ctx.author, int(amount * (float(coin_data["quote"]["USD"]["price"]) * 10)))
         currency = await bank.get_currency_name(ctx.guild)
